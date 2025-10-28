@@ -47,8 +47,33 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
-/2025-10-27文件整理/batch_results_20251027_172030
-/2025-10-27文件整理/div2k_00
-/2025-10-27文件整理/MVC/batch_results_20251027_215939
-/开始前的idea/关于图像亮度识别的idea/batch_results_20251027_145922
-/2025-10-27文件整理/MVC/controllers/__pycache__
+
+# Python compiled files
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Conda
+.conda/
+conda/
+envs/
+builds/
+
+# Office document temporary files
+~$*.docx
+~$*.doc
+~$*.xlsx
+~$*.xls
+~$*.pptx
+~$*.ppt
+*.tmp
+
+# Specific exclusions
+batch_results_*/
+*div2k*/
