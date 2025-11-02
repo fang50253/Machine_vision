@@ -367,8 +367,8 @@ class AdvancedDenoiser:
     
     def hybrid_denoise_v1(self, image):
         """混合去噪方法1"""
-        dl_result = self.deep_learning_denoise(image)
-        return self.traditional_denoiser.wavelet_bilateral_hybrid(dl_result)
+        dl_result = self.traditional_denoiser.deep_learning_denoise(image)
+        return self.wavelet_bilateral_hybrid(dl_result)
     
     
     
@@ -400,28 +400,44 @@ class AdvancedDenoiser:
         """
         print(f"🔧 开始 V2 混合去噪 (锐化强度: +{sharpen_strength})")
         
+    def hybrid_denoise_v2_enhanced(self, image: np.ndarray, noise_types: List[str] = None, 
+                             intensities: List[float] = None, sharpen_strength: int = 10) -> np.ndarray:
+        """
+        增强的混合去噪方法 V2 - 先锐化再DnCNN
+        
+        参数:
+            image: 输入噪声图像
+            noise_types: 噪声类型列表
+            intensities: 噪声强度列表  
+            sharpen_strength: 锐化强度 (1-20)，默认+10
+        
+        返回:
+            去噪并锐化后的图像
+        """
+        print(f"🔧 开始 V2 混合去噪 (先锐化再DnCNN, 锐化强度: +{sharpen_strength})")
+    
         try:
-            # 步骤1: 深度学习初步去噪
-            print("1/4 深度学习去噪...")
-            dl_denoised = self.deep_learning_denoise(image)
-            
-            # 步骤2: 传统方法优化细节
-            print("2/4 传统方法优化...")
-            traditional_refined = self.traditional_denoiser.wavelet_bilateral_hybrid(dl_denoised)
-            
-            # 步骤3: 锐化处理（如果锐化器可用）
-            sharpened_image = traditional_refined
+            # 步骤1: 先对噪声图像进行锐化预处理
+            sharpened_input = image
             if self.image_sharpener is not None:
-                print("3/4 图像锐化增强...")
-                sharpened_image = self._apply_sharpening(traditional_refined, sharpen_strength)
+                print("1/4 输入图像锐化预处理...")
+                sharpened_input = self._apply_sharpening(image, sharpen_strength)
             else:
-                print("3/4 跳过锐化 (锐化器不可用)")
+                print("1/4 跳过输入锐化 (锐化器不可用)")
+            
+            # 步骤2: 深度学习去噪（对锐化后的图像）
+            print("2/4 深度学习去噪...")
+            dl_denoised = self.deep_learning_denoise(sharpened_input)
+            
+            # 步骤3: 传统方法优化细节
+            print("3/4 传统方法优化...")
+            traditional_refined = self.traditional_denoiser.wavelet_bilateral_hybrid(dl_denoised)
             
             # 步骤4: 最终质量优化
             print("4/4 最终质量优化...")
-            final_result = self._post_processing_optimization(sharpened_image, image)
+            final_result = self._post_processing_optimization(traditional_refined, image)
             
-            print("✅ V2 混合去噪完成")
+            print("✅ V2 混合去噪完成 (先锐化策略)")
             return final_result
             
         except Exception as e:

@@ -288,6 +288,174 @@ def model_training():
         
     except Exception as e:
         print(f"训练过程中出错: {e}")
+    def _save_loss_plot(self, results, save_dir="training_results"):
+        """
+        保存损失曲线图到文件
+        
+        参数:
+            results: 包含训练结果的字典
+            save_dir: 保存目录
+        """
+        try:
+            # 创建保存目录
+            os.makedirs(save_dir, exist_ok=True)
+            
+            # 生成时间戳文件名
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"loss_curves_{timestamp}.png"
+            filepath = os.path.join(save_dir, filename)
+            
+            # 创建图表
+            plt.figure(figsize=(15, 10))
+            
+            # 1. 训练和验证损失曲线
+            plt.subplot(2, 2, 1)
+            epochs = range(1, len(results['train_losses']) + 1)
+            
+            plt.plot(epochs, results['train_losses'], 'b-', linewidth=2, label='Training Loss', alpha=0.8)
+            plt.plot(epochs, results['val_losses'], 'r-', linewidth=2, label='Validation Loss', alpha=0.8)
+            plt.title('Training and Validation Loss', fontsize=12, fontweight='bold')
+            plt.xlabel('Epochs')
+            plt.ylabel('MSE Loss')
+            plt.legend()
+            plt.grid(True, alpha=0.3)
+            
+            # 2. 对数尺度损失曲线
+            plt.subplot(2, 2, 2)
+            plt.semilogy(epochs, results['train_losses'], 'b-', linewidth=2, label='Training Loss', alpha=0.8)
+            plt.semilogy(epochs, results['val_losses'], 'r-', linewidth=2, label='Validation Loss', alpha=0.8)
+            plt.title('Log-Scale Loss Curves', fontsize=12, fontweight='bold')
+            plt.xlabel('Epochs')
+            plt.ylabel('Log MSE Loss')
+            plt.legend()
+            plt.grid(True, alpha=0.3)
+            
+            # 3. 损失改进率
+            plt.subplot(2, 2, 3)
+            if len(results['train_losses']) > 1:
+                train_improvements = []
+                val_improvements = []
+                
+                for i in range(1, len(results['train_losses'])):
+                    train_imp = (results['train_losses'][i-1] - results['train_losses'][i]) / results['train_losses'][i-1] * 100
+                    val_imp = (results['val_losses'][i-1] - results['val_losses'][i]) / results['val_losses'][i-1] * 100
+                    train_improvements.append(train_imp)
+                    val_improvements.append(val_imp)
+                
+                plt.plot(range(1, len(train_improvements) + 1), train_improvements, 'g-', 
+                        linewidth=2, label='Training Improvement %', alpha=0.8)
+                plt.plot(range(1, len(val_improvements) + 1), val_improvements, 'm-', 
+                        linewidth=2, label='Validation Improvement %', alpha=0.8)
+                plt.title('Epoch-to-Epoch Improvement Rate', fontsize=12, fontweight='bold')
+                plt.xlabel('Epoch Transition')
+                plt.ylabel('Improvement Percentage (%)')
+                plt.legend()
+                plt.grid(True, alpha=0.3)
+            
+            # 4. 最终统计信息
+            plt.subplot(2, 2, 4)
+            # 清空这个子图，用于显示文本信息
+            plt.axis('off')
+            
+            # 准备统计文本
+            stats_text = [
+                "TRAINING STATISTICS",
+                "=" * 20,
+                f"Total Epochs: {len(results['train_losses'])}",
+                f"Best Val Loss: {results['best_val_loss']:.6f}",
+                f"Final Train Loss: {results['train_losses'][-1]:.6f}",
+                f"Final Val Loss: {results['val_losses'][-1]:.6f}",
+                "",
+                "IMPROVEMENTS",
+                "=" * 20
+            ]
+            
+            # 计算总体改进
+            if len(results['train_losses']) > 1:
+                total_train_imp = (results['train_losses'][0] - results['train_losses'][-1]) / results['train_losses'][0] * 100
+                total_val_imp = (results['val_losses'][0] - results['val_losses'][-1]) / results['val_losses'][0] * 100
+                stats_text.extend([
+                    f"Train Improvement: {total_train_imp:.1f}%",
+                    f"Val Improvement: {total_val_imp:.1f}%"
+                ])
+            
+            # 添加训练参数信息
+            stats_text.extend([
+                "",
+                "TRAINING INFO",
+                "=" * 20,
+                f"Timestamp: {timestamp}",
+                f"Device: {self.device}",
+                f"Model: ImprovedDnCNN-{NUM_LAYERS}L"
+            ])
+            
+            # 显示文本
+            plt.text(0.1, 0.95, '\n'.join(stats_text), transform=plt.gca().transAxes,
+                    fontfamily='monospace', fontsize=10, verticalalignment='top',
+                    bbox=dict(boxstyle="round,pad=0.3", facecolor="lightgray", alpha=0.7))
+            
+            # 设置总标题
+            plt.suptitle('DnCNN Training Analysis Report', fontsize=16, fontweight='bold', y=0.98)
+            
+            # 调整布局并保存
+            plt.tight_layout()
+            plt.subplots_adjust(top=0.93)
+            plt.savefig(filepath, dpi=300, bbox_inches='tight', facecolor='white')
+            plt.close()
+            
+            print(f"✅ 损失曲线已保存至: {filepath}")
+            
+            # 同时保存损失数据为CSV文件
+            self._save_loss_data(results, save_dir, timestamp)
+            
+        except Exception as e:
+            print(f"❌ 保存损失曲线时出错: {e}")
+
+    def _save_loss_data(self, results, save_dir, timestamp):
+        """
+        保存损失数据为CSV文件
+        
+        参数:
+            results: 训练结果
+            save_dir: 保存目录
+            timestamp: 时间戳
+        """
+        try:
+            csv_filename = f"loss_data_{timestamp}.csv"
+            csv_filepath = os.path.join(save_dir, csv_filename)
+            
+            # 准备数据
+            epochs = range(1, len(results['train_losses']) + 1)
+            
+            # 创建DataFrame
+            import pandas as pd
+            loss_data = {
+                'epoch': list(epochs),
+                'train_loss': results['train_losses'],
+                'val_loss': results['val_losses']
+            }
+            
+            # 计算改进率
+            if len(results['train_losses']) > 1:
+                train_improvements = [0]  # 第一轮没有改进
+                val_improvements = [0]
+                
+                for i in range(1, len(results['train_losses'])):
+                    train_imp = (results['train_losses'][i-1] - results['train_losses'][i]) / results['train_losses'][i-1] * 100
+                    val_imp = (results['val_losses'][i-1] - results['val_losses'][i]) / results['val_losses'][i-1] * 100
+                    train_improvements.append(train_imp)
+                    val_improvements.append(val_imp)
+                
+                loss_data['train_improvement_%'] = train_improvements
+                loss_data['val_improvement_%'] = val_improvements
+            
+            df = pd.DataFrame(loss_data)
+            df.to_csv(csv_filepath, index=False, encoding='utf-8')
+            
+            print(f"✅ 损失数据已保存至: {csv_filepath}")
+            
+        except Exception as e:
+            print(f"❌ 保存损失数据时出错: {e}")
 
 if __name__ == "__main__":
     model_training()
