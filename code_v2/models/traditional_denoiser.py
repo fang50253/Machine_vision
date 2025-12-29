@@ -9,6 +9,13 @@ import platform
 from config import NUM_LAYERS
 from models.image_sharpener import ImageSharpener
 
+try:
+    from models.edge_enhancer import EdgeEnhancementNetwork
+    EDGE_ENHANCER_AVAILABLE = True
+except ImportError:
+    EDGE_ENHANCER_AVAILABLE = False
+
+
 class TraditionalDenoiser:
     """传统去噪方法 - 完整修复版本"""
     
@@ -591,17 +598,101 @@ class AdvancedDenoiser:
         return results
     
 
-    def hybrid_denoise_v3(self, image):
-        """混合去噪方法3"""
+    def hybrid_denoise_v3(self, image, edge_strength=1.0, model_path=None):
+        """混合去噪方法3：DnCNN降噪 + 边缘增强（真正使用模型）"""
+        # DnCNN降噪
         dl_result = self.deep_learning_denoise(image)
-        wavelet_result = self.traditional_denoiser.wavelet_denoise_robust(image)
-        bilateral_result = self.traditional_denoiser.bilateral_denoise_basic(image)
         
-        # 加权融合
-        fused = cv2.addWeighted(dl_result, 0.5, wavelet_result, 0.3, 0)
-        fused = cv2.addWeighted(fused, 0.7, bilateral_result, 0.3, 0)
+        if not EDGE_ENHANCER_AVAILABLE:
+            return dl_result
         
-        return fused
+        try:
+            # 1. 初始化边缘增强器（带权重加载）
+            if not hasattr(self, 'edge_enhancer') or self.edge_enhancer is None:
+                self.edge_enhancer = EdgeEnhancementNetwork().to(self.device)
+                
+                # 设置模型路径
+                if model_path is None:
+                    model_path = "checkpoints/edge_enhancer/best_model.pth"
+                    if not os.path.exists(model_path):
+                        # 尝试其他可能的位置
+                        model_path = "trained_models/edge_enhancer.pth"
+                
+                # 加载权重
+                if os.path.exists(model_path):
+                    print(f"加载边缘增强模型: {os.path.basename(model_path)}")
+                    checkpoint = torch.load(model_path, map_location=self.device)
+                    
+                    # 处理不同的checkpoint格式
+                    if 'model_state_dict' in checkpoint:
+                        state_dict = checkpoint['model_state_dict']
+                    elif 'state_dict' in checkpoint:
+                        state_dict = checkpoint['state_dict']
+                    else:
+                        state_dict = checkpoint
+                    
+                    # 处理'module.'前缀
+                    from collections import OrderedDict
+                    if all(key.startswith('module.') for key in state_dict.keys()):
+                        new_state_dict = OrderedDict()
+                        for k, v in state_dict.items():
+                            name = k[7:]  # 去掉'module.'前缀
+                            new_state_dict[name] = v
+                        state_dict = new_state_dict
+                    
+                    self.edge_enhancer.load_state_dict(state_dict, strict=False)
+                else:
+                    print(f"警告: 边缘增强模型文件不存在: {model_path}")
+                    print("使用随机初始化的模型（效果可能不好）")
+                
+                self.edge_enhancer.eval()
+            
+            # 2. 预处理
+            # 确保输入在[0, 1]范围内
+            if dl_result.dtype != np.float32:
+                dl_result_float = dl_result.astype(np.float32) / 255.0
+            else:
+                dl_result_float = dl_result
+            
+            # 转换为tensor
+            if len(dl_result_float.shape) == 3:
+                image_tensor = torch.from_numpy(dl_result_float.transpose(2, 0, 1))
+            else:
+                image_tensor = torch.from_numpy(dl_result_float).unsqueeze(0)
+            
+            image_tensor = image_tensor.unsqueeze(0).to(self.device)
+            
+            # 3. 模型推理
+            with torch.no_grad():
+                enhanced_tensor, edge_map = self.edge_enhancer(image_tensor)
+                
+                # 应用强度控制
+                if edge_strength != 1.0:
+                    residual = enhanced_tensor - image_tensor
+                    enhanced_tensor = image_tensor + residual * edge_strength
+            
+            # 4. 后处理
+            # 移动到CPU并转换为numpy
+            enhanced_tensor = enhanced_tensor.cpu()
+            enhanced_np = enhanced_tensor.squeeze(0).numpy()
+            
+            if len(enhanced_np.shape) == 3:
+                enhanced_np = enhanced_np.transpose(1, 2, 0)
+            
+            # 反归一化到[0, 255]
+            enhanced_np = np.clip(enhanced_np * 255.0, 0, 255).astype(np.uint8)
+            
+            # 确保输出尺寸与输入一致
+            if enhanced_np.shape != dl_result.shape:
+                enhanced_np = cv2.resize(enhanced_np, (dl_result.shape[1], dl_result.shape[0]))
+            
+            return enhanced_np
+            
+        except Exception as e:
+            print(f"边缘增强失败: {e}")
+            import traceback
+            traceback.print_exc()
+            return dl_result
     
     def wavelet_bilateral_hybrid(self, image):
         """小波双边混合"""

@@ -237,3 +237,92 @@ def get_model_path():
         print("请先运行训练程序来训练模型。")
     
     return None
+
+
+def calculate_psnr(img1, img2, max_val=255.0):
+    """
+    计算峰值信噪比 (PSNR)
+    
+    参数:
+        img1: 图像1 (numpy数组)
+        img2: 图像2 (numpy数组)
+        max_val: 最大像素值
+    
+    返回:
+        PSNR值 (dB)
+    """
+    try:
+        # 确保尺寸相同
+        if img1.shape != img2.shape:
+            # 调整尺寸
+            img2 = cv2.resize(img2, (img1.shape[1], img1.shape[0]))
+        
+        # 确保数据类型
+        img1_float = img1.astype(np.float64)
+        img2_float = img2.astype(np.float64)
+        
+        # 计算MSE
+        mse = np.mean((img1_float - img2_float) ** 2)
+        
+        if mse == 0:
+            return float('inf')
+        
+        # 计算PSNR
+        psnr = 20 * np.log10(max_val / np.sqrt(mse))
+        return psnr
+    
+    except Exception as e:
+        print(f"PSNR计算错误: {e}")
+        return 0.0
+
+def calculate_ssim(img1, img2):
+    """
+    计算结构相似性指数 (SSIM)
+    
+    参数:
+        img1: 图像1 (numpy数组)
+        img2: 图像2 (numpy数组)
+    
+    返回:
+        SSIM值 (0-1之间)
+    """
+    try:
+        from skimage.metrics import structural_similarity as ssim_calc
+        
+        # 确保尺寸相同
+        if img1.shape != img2.shape:
+            img2 = cv2.resize(img2, (img1.shape[1], img1.shape[0]))
+        
+        # 确保数据类型
+        if img1.dtype != np.uint8:
+            img1 = img1.astype(np.uint8)
+        if img2.dtype != np.uint8:
+            img2 = img2.astype(np.uint8)
+        
+        # 确保数值范围
+        if img1.max() <= 1.0:
+            img1 = (img1 * 255).astype(np.uint8)
+        if img2.max() <= 1.0:
+            img2 = (img2 * 255).astype(np.uint8)
+        
+        # 计算SSIM
+        if len(img1.shape) == 3:
+            # 彩色图像
+            ssim_value = ssim_calc(img1, img2, 
+                                  data_range=255,
+                                  channel_axis=2,
+                                  win_size=7)
+        else:
+            # 灰度图像
+            ssim_value = ssim_calc(img1, img2,
+                                  data_range=255,
+                                  win_size=7)
+        
+        return ssim_value
+    
+    except ImportError:
+        print("警告: skimage库未安装，无法计算SSIM")
+        return 0.0
+    except Exception as e:
+        print(f"SSIM计算错误: {e}")
+        return 0.0

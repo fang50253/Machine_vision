@@ -77,3 +77,4 @@ builds/
 # Specific exclusions
 batch_results_*/
 *div2k*/
+/code_v2/datasets
