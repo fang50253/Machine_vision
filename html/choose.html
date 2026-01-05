@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>机器视觉算法与应用 - 交互式测试系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eaeaea;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+        
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 25px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .progress-info {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .progress-item {
+            font-weight: 500;
+        }
+        
+        .progress-item .number {
+            color: #3498db;
+            font-weight: bold;
+        }
+        
+        .progress-bar {
+            flex-grow: 1;
+            height: 8px;
+            background-color: #ecf0f1;
+            border-radius: 4px;
+            margin: 0 15px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #3498db;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        .section-title {
+            color: #2c3e50;
+            font-size: 20px;
+            margin: 25px 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eaeaea;
+        }
+        
+        .question-container {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+        
+        .question-container.active {
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+            border-left: 4px solid #3498db;
+        }
+        
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .question-number {
+            font-weight: bold;
+            color: #3498db;
+            font-size: 18px;
+            background-color: #e3f2fd;
+            padding: 6px 12px;
+            border-radius: 6px;
+        }
+        
+        .question-text {
+            font-size: 17px;
+            font-weight: 500;
+            color: #2c3e50;
+            line-height: 1.5;
+            flex-grow: 1;
+            margin-left: 15px;
+        }
+        
+        .options-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        
+        .option {
+            padding: 14px 18px;
+            background-color: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+        }
+        
+        .option:hover {
+            background-color: #f0f7ff;
+            border-color: #b3d7ff;
+        }
+        
+        .option.selected {
+            border-color: #3498db;
+            background-color: #e3f2fd;
+        }
+        
+        .option.correct {
+            border-color: #27ae60;
+            background-color: #d5f4e6;
+        }
+        
+        .option.incorrect {
+            border-color: #e74c3c;
+            background-color: #fadbd8;
+        }
+        
+        .option-label {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            line-height: 32px;
+            text-align: center;
+            background-color: #f0f0f0;
+            border-radius: 6px;
+            margin-right: 15px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .selected .option-label {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .feedback {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .feedback.correct {
+            background-color: #d5f4e6;
+            border-left: 4px solid #27ae60;
+            color: #155724;
+        }
+        
+        .feedback.incorrect {
+            background-color: #fadbd8;
+            border-left: 4px solid #e74c3c;
+            color: #721c24;
+        }
+        
+        .feedback-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .feedback-icon {
+            font-size: 20px;
+        }
+        
+        .feedback-text {
+            line-height: 1.5;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eaeaea;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-prev {
+            background-color: #f8f9fa;
+            color: #495057;
+            border: 1px solid #ced4da;
+        }
+        
+        .btn-prev:hover {
+            background-color: #e9ecef;
+        }
+        
+        .btn-next {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn-next:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-submit {
+            background-color: #27ae60;
+            color: white;
+        }
+        
+        .btn-submit:hover {
+            background-color: #219653;
+        }
+        
+        .btn-reset {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .btn-reset:hover {
+            background-color: #c0392b;
+        }
+        
+        .result-container {
+            display: none;
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+            text-align: center;
+        }
+        
+        .result-title {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .score {
+            font-size: 48px;
+            font-weight: bold;
+            color: #3498db;
+            margin: 20px 0;
+        }
+        
+        .score-message {
+            font-size: 18px;
+            margin-bottom: 25px;
+            color: #555;
+        }
+        
+        .answer-summary {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .answer-indicator {
+            width: 36px;
+            height: 36px;
+            line-height: 36px;
+            border-radius: 50%;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .answer-indicator.correct {
+            background-color: #27ae60;
+            color: white;
+        }
+        
+        .answer-indicator.incorrect {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .answer-indicator.unanswered {
+            background-color: #bdc3c7;
+            color: white;
+        }
+        
+        .toggle-answers {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #f1c40f;
+            color: #333;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .all-answers {
+            display: none;
+            margin-top: 25px;
+            text-align: left;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .answer-item {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .answer-item:last-child {
+            border-bottom: none;
+        }
+        
+        .answer-item h4 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .correct-answer {
+            color: #27ae60;
+            font-weight: 500;
+        }
+        
+        .user-answer {
+            color: #e74c3c;
+            font-weight: 500;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .question-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .question-text {
+                margin-left: 0;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>机器视觉算法与应用 - 交互式测试系统</h1>
+            <div class="subtitle">2025年秋季《机器视觉算法与应用》期末考试考前辅导</div>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-info">
+                <div class="progress-item">已完成: <span class="number" id="completed-count">0</span>/25</div>
+                <div class="progress-item">正确: <span class="number" id="correct-count">0</span>/25</div>
+                <div class="progress-item">得分: <span class="number" id="score">0</span>分</div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+        
+        <div class="section-title">一、单项选择题 (共25题，每题4分)</div>
+        
+        <!-- 问题将动态生成到这里 -->
+        <div id="questions-container"></div>
+        
+        <div class="controls">
+            <button class="btn btn-prev" id="prev-btn">上一题</button>
+            <button class="btn btn-next" id="next-btn">下一题</button>
+            <button class="btn btn-submit" id="submit-btn">提交答卷</button>
+            <button class="btn btn-reset" id="reset-btn">重新开始</button>
+        </div>
+        
+        <div class="result-container" id="result-container">
+            <h2 class="result-title">测试结果</h2>
+            <div class="score" id="final-score">0</div>
+            <div class="score-message" id="score-message"></div>
+            
+            <div class="answer-summary" id="answer-summary"></div>
+            
+            <button class="toggle-answers" id="toggle-answers">查看详细答案</button>
+            
+            <div class="all-answers" id="all-answers"></div>
+        </div>
+    </div>
+
+    <script>
+        // 试题数据
+        const questions = [
+            {
+                id: 1,
+                question: "在光线昏暗、图像噪点多的场景下，除了增大光圈，以下哪种方法可以有效改善图像质量？",
+                options: [
+                    "A. 缩短曝光时间",
+                    "B. 延长曝光时间", 
+                    "C. 提高ISO感光度",
+                    "D. 降低ISO感光度"
+                ],
+                correctAnswer: 1,
+                explanation: "延长曝光时间可以增加进光量，提高信噪比，从而改善低光照图像质量。缩短曝光时间会使画面更暗；降低ISO会减少噪点但也会使画面变暗（需配合长曝光）；提高ISO会增加噪点。"
+            },
+            {
+                id: 2,
+                question: "图像中出现随机的黑白噪点（椒盐噪声），应选择哪种滤波器进行处理？",
+                options: [
+                    "A. 均值滤波",
+                    "B. 高斯滤波",
+                    "C. 中值滤波", 
+                    "D. 双边滤波"
+                ],
+                correctAnswer: 2,
+                explanation: "中值滤波取邻域中间值，能有效去除孤立的椒盐噪声点，同时较好保留边缘信息。均值滤波和高斯滤波会模糊边缘且去噪不彻底；双边滤波主要用于保持边缘的同时去噪，但对椒盐噪声效果不如中值滤波。"
+            },
+            {
+                id: 3,
+                question: "在图像的傅里叶变换频谱图中，中心的亮点代表什么？",
+                options: [
+                    "A. 直流分量", 
+                    "B. 高频分量",
+                    "C. 边缘信息",
+                    "D. 纹理信息"
+                ],
+                correctAnswer: 0,
+                explanation: "频谱图中心的亮点代表频率为0的直流分量，表示图像的平均灰度值。边缘和纹理对应高频分量，平滑区域对应低频分量。"
+            },
+            {
+                id: 4,
+                question: "在Canny边缘检测算法中，用于细化边缘、得到单像素宽边缘的步骤是？",
+                options: [
+                    "A. 高斯滤波",
+                    "B. 非极大值抑制", 
+                    "C. 双阈值检测",
+                    "D. 边缘连接"
+                ],
+                correctAnswer: 1,
+                explanation: "非极大值抑制通过保留梯度局部最大值，使边缘变细至单像素宽度。高斯滤波用于去噪；双阈值用于连接边缘；边缘连接是最后一步。"
+            },
+            {
+                id: 5,
+                question: "霍夫变换主要用于检测图像中的什么？",
+                options: [
+                    "A. 颜色分布",
+                    "B. 纹理模式",
+                    "C. 直线或圆等几何形状", 
+                    "D. 运动轨迹"
+                ],
+                correctAnswer: 2,
+                explanation: "霍夫变换将图像空间映射到参数空间，通过投票机制检测直线、圆等几何形状。"
+            },
+            {
+                id: 6,
+                question: "SIFT算法通过什么方法构建尺度空间以实现尺度不变性？",
+                options: [
+                    "A. Harris角点检测",
+                    "B. 高斯差分金字塔", 
+                    "C. 拉普拉斯金字塔",
+                    "D. 小波变换"
+                ],
+                correctAnswer: 1,
+                explanation: "SIFT使用高斯差分金字塔近似拉普拉斯算子，在不同尺度空间检测极值点，从而实现尺度不变性。"
+            },
+            {
+                id: 7,
+                question: "SIFT描述子如何实现旋转不变性？",
+                options: [
+                    "A. 使用圆形邻域",
+                    "B. 归一化梯度方向", 
+                    "C. 确定主方向并旋转坐标系", 
+                    "D. 使用旋转对称的滤波器"
+                ],
+                correctAnswer: 2,
+                explanation: "SIFT统计关键点邻域梯度直方图，找到峰值作为主方向，然后将坐标系旋转至主方向，从而实现旋转不变性。"
+            },
+            {
+                id: 8,
+                question: "在Harris角点检测算法中，角点响应值R满足什么条件？",
+                options: [
+                    "A. R很大（正值）", 
+                    "B. R接近于0",
+                    "C. R为负值",
+                    "D. |R|很大"
+                ],
+                correctAnswer: 0,
+                explanation: "当R很大（正值）时，表示两个特征值都很大，对应角点。R接近于0对应平坦区域，R为负值对应边缘。"
+            },
+            {
+                id: 9,
+                question: "拼接两张视角不同的图像（如全景拼接），需要计算什么变换矩阵？",
+                options: [
+                    "A. 仿射变换矩阵",
+                    "B. 单应性矩阵", 
+                    "C. 欧式变换矩阵",
+                    "D. 相似变换矩阵"
+                ],
+                correctAnswer: 1,
+                explanation: "单应性矩阵描述同一平面在不同视角下的投影变换关系，适用于图像拼接。"
+            },
+            {
+                id: 10,
+                question: "RANSAC在特征匹配中的主要作用是什么？",
+                options: [
+                    "A. 加速特征匹配",
+                    "B. 剔除误匹配点", 
+                    "C. 优化特征描述子",
+                    "D. 提高匹配精度"
+                ],
+                correctAnswer: 1,
+                explanation: "RANSAC通过随机采样和模型验证，能够有效剔除误匹配点，提高模型估计的鲁棒性。"
+            },
+            {
+                id: 11,
+                question: "在双目视觉中，左图像上的一个点，其在右图像上的对应点一定位于什么线上？",
+                options: [
+                    "A. 极线", 
+                    "B. 水平线",
+                    "C. 垂直线",
+                    "D. 对角线"
+                ],
+                correctAnswer: 0,
+                explanation: "对极约束表明，一个点在另一图像上的对应点必然位于对应的极线上，这将搜索范围从全图缩小到一条线。"
+            },
+            {
+                id: 12,
+                question: "增大双目相机的基线距离，对深度测量有何影响？",
+                options: [
+                    "A. 视差变大，测量远距离物体精度提高", 
+                    "B. 视差变小，测量精度降低",
+                    "C. 对近距离物体测量更准确",
+                    "D. 对远距离物体测量不再有效"
+                ],
+                correctAnswer: 0,
+                explanation: "根据视差公式 z = f·B/d，基线B增大，视差d变大，对远距离物体的测量精度提高，但近距离物体可能出现盲区。"
+            },
+            {
+                id: 13,
+                question: "结构光三维重建与被动双目视觉的主要区别是什么？",
+                options: [
+                    "A. 主动投射图案", 
+                    "B. 使用两个相机",
+                    "C. 不需要标定",
+                    "D. 计算复杂度更低"
+                ],
+                correctAnswer: 0,
+                explanation: "结构光是主动视觉，通过投射特定图案（如光斑、条纹）来辅助三维重建；双目视觉是被动视觉，仅依靠环境光。"
+            },
+            {
+                id: 14,
+                question: "NeRF渲染新视角图像的核心技术是什么？",
+                options: [
+                    "A. 光线追踪",
+                    "B. 体渲染", 
+                    "C. 光栅化",
+                    "D. 路径追踪"
+                ],
+                correctAnswer: 1,
+                explanation: "NeRF通过体渲染技术，沿着相机光线积分颜色和密度，从而合成新视角图像。"
+            },
+            {
+                id: 15,
+                question: "3DGS相比NeRF的最大优势是什么？",
+                options: [
+                    "A. 重建质量更高",
+                    "B. 内存占用更小",
+                    "C. 渲染速度快", 
+                    "D. 训练数据需求少"
+                ],
+                correctAnswer: 2,
+                explanation: "3DGS基于光栅化技术，渲染速度极快，可以达到实时渲染；NeRF基于体渲染积分，速度较慢。"
+            },
+            {
+                id: 16,
+                question: "SLAM中回环检测的主要目的是什么？",
+                options: [
+                    "A. 提高定位精度",
+                    "B. 消除累计误差", 
+                    "C. 加速地图构建",
+                    "D. 减少计算量"
+                ],
+                correctAnswer: 1,
+                explanation: "回环检测通过识别曾到过的场景，构建约束条件，进行全局优化，从而消除SLAM系统的累计误差。"
+            },
+            {
+                id: 17,
+                question: "ORB-SLAM属于哪种视觉里程计方法？",
+                options: [
+                    "A. 直接法",
+                    "B. 半直接法",
+                    "C. 特征点法", 
+                    "D. 混合法"
+                ],
+                correctAnswer: 2,
+                explanation: "ORB-SLAM基于ORB特征点进行跟踪和建图，属于特征点法；直接法是基于像素灰度直接优化。"
+            },
+            {
+                id: 18,
+                question: "GoogLeNet中1×1卷积层的主要作用是什么？",
+                options: [
+                    "A. 提取局部特征",
+                    "B. 降维或升维", 
+                    "C. 增加感受野",
+                    "D. 减少非线性"
+                ],
+                correctAnswer: 1,
+                explanation: "1×1卷积主要用于改变通道数，实现降维或升维，减少参数量和计算复杂度，同时增加非线性。"
+            },
+            {
+                id: 19,
+                question: "ResNet引入Shortcut连接主要是为了解决什么问题？",
+                options: [
+                    "A. 梯度消失/网络退化", 
+                    "B. 过拟合",
+                    "C. 计算复杂度高",
+                    "D. 特征表达能力不足"
+                ],
+                correctAnswer: 0,
+                explanation: "Shortcut连接允许梯度直接反向传播，缓解了深度网络中的梯度消失问题，解决了网络退化问题。"
+            },
+            {
+                id: 20,
+                question: "Vision Transformer相比CNN的主要特点是什么？",
+                options: [
+                    "A. 具有全局感受野", 
+                    "B. 参数量更少",
+                    "C. 训练速度更快",
+                    "D. 对数据要求更低"
+                ],
+                correctAnswer: 0,
+                explanation: "ViT的自注意力机制使每个Patch都能与图像中所有其他Patch交互，第一层就拥有全局感受野。"
+            },
+            {
+                id: 21,
+                question: "下列属于One-Stage目标检测算法的是？",
+                options: [
+                    "A. R-CNN",
+                    "B. Faster R-CNN",
+                    "C. YOLO", 
+                    "D. Mask R-CNN"
+                ],
+                correctAnswer: 2,
+                explanation: "YOLO和SSD属于One-Stage检测算法，直接回归类别和坐标；R-CNN和Faster R-CNN属于Two-Stage算法，先生成候选框。"
+            },
+            {
+                id: 22,
+                question: "医学图像分割中常用的U形网络结构是？",
+                options: [
+                    "A. U-Net", 
+                    "B. SegNet",
+                    "C. FCN",
+                    "D. DeepLab"
+                ],
+                correctAnswer: 0,
+                explanation: "U-Net采用编码器-解码器结构，通过Skip Connection融合深浅层特征，在医学图像分割中表现出色。"
+            },
+            {
+                id: 23,
+                question: "GAN包含哪两个核心网络？",
+                options: [
+                    "A. 编码器与解码器",
+                    "B. 生成器与判别器", 
+                    "C. 编码器与判别器",
+                    "D. 生成器与解码器"
+                ],
+                correctAnswer: 1,
+                explanation: "GAN包含生成器（Generator）和判别器（Discriminator），二者对抗训练，生成器试图生成逼真数据骗过判别器。"
+            },
+            {
+                id: 24,
+                question: "CLIP模型如何实现图文关联？",
+                options: [
+                    "A. 自监督学习",
+                    "B. 对比学习", 
+                    "C. 强化学习",
+                    "D. 迁移学习"
+                ],
+                correctAnswer: 1,
+                explanation: "CLIP使用对比学习，拉近匹配的图文对特征，推远不匹配的图文对特征，从而实现图文关联。"
+            },
+            {
+                id: 25,
+                question: "具身智能强调智能体必须具备什么能力？",
+                options: [
+                    "A. 感知环境并采取行动", 
+                    "B. 理解自然语言",
+                    "C. 进行逻辑推理",
+                    "D. 记忆大量知识"
+                ],
+                correctAnswer: 0,
+                explanation: "具身智能强调智能体不仅被动观察，还要有身体并与物理世界交互，通过感知环境并采取行动来实现智能。"
+            }
+        ];
+
+        // 用户答题状态
+        let userAnswers = new Array(questions.length).fill(-1); // -1表示未回答
+        let currentQuestionIndex = 0;
+        
+        // DOM元素
+        const questionsContainer = document.getElementById('questions-container');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const resultContainer = document.getElementById('result-container');
+        const completedCount = document.getElementById('completed-count');
+        const correctCount = document.getElementById('correct-count');
+        const scoreElement = document.getElementById('score');
+        const progressFill = document.getElementById('progress-fill');
+        const toggleAnswersBtn = document.getElementById('toggle-answers');
+        const allAnswersContainer = document.getElementById('all-answers');
+        const answerSummary = document.getElementById('answer-summary');
+        const finalScore = document.getElementById('final-score');
+        const scoreMessage = document.getElementById('score-message');
+        
+        // 初始化试题
+        function initQuestions() {
+            questionsContainer.innerHTML = '';
+            
+            questions.forEach((q, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = `question-container ${index === 0 ? 'active' : ''}`;
+                questionDiv.id = `question-${index}`;
+                
+                let optionsHtml = '';
+                q.options.forEach((option, optIndex) => {
+                    const isSelected = userAnswers[index] === optIndex;
+                    const isCorrect = userAnswers[index] !== -1 && optIndex === q.correctAnswer;
+                    const isIncorrect = userAnswers[index] !== -1 && userAnswers[index] === optIndex && userAnswers[index] !== q.correctAnswer;
+                    
+                    let optionClass = 'option';
+                    if (isSelected) optionClass += ' selected';
+                    if (isCorrect) optionClass += ' correct';
+                    if (isIncorrect) optionClass += ' incorrect';
+                    
+                    optionsHtml += `
+                        <div class="${optionClass}" data-index="${optIndex}" onclick="selectOption(${index}, ${optIndex})">
+                            <div class="option-label">${String.fromCharCode(65 + optIndex)}</div>
+                            <div class="option-text">${option}</div>
+                        </div>
+                    `;
+                });
+                
+                let feedbackHtml = '';
+                if (userAnswers[index] !== -1) {
+                    const isCorrect = userAnswers[index] === q.correctAnswer;
+                    feedbackHtml = `
+                        <div class="feedback ${isCorrect ? 'correct' : 'incorrect'}">
+                            <div class="feedback-title">
+                                <span class="feedback-icon">${isCorrect ? '✓' : '✗'}</span>
+                                ${isCorrect ? '回答正确！' : '回答错误！'}
+                            </div>
+                            <div class="feedback-text">${q.explanation}</div>
+                        </div>
+                    `;
+                }
+                
+                questionDiv.innerHTML = `
+                    <div class="question-header">
+                        <div class="question-number">第${index + 1}题</div>
+                        <div class="question-text">${q.question}</div>
+                    </div>
+                    <div class="options-container">
+                        ${optionsHtml}
+                    </div>
+                    ${feedbackHtml}
+                `;
+                
+                questionsContainer.appendChild(questionDiv);
+            });
+            
+            updateProgress();
+            updateButtons();
+        }
+        
+        // 选择选项
+        window.selectOption = function(questionIndex, optionIndex) {
+            userAnswers[questionIndex] = optionIndex;
+            
+            // 更新当前问题的显示
+            const questionDiv = document.getElementById(`question-${questionIndex}`);
+            const options = questionDiv.querySelectorAll('.option');
+            
+            options.forEach((opt, idx) => {
+                opt.classList.remove('selected', 'correct', 'incorrect');
+                
+                if (idx === optionIndex) {
+                    opt.classList.add('selected');
+                }
+                
+                // 如果已答题，显示正确答案和错误答案
+                if (idx === questions[questionIndex].correctAnswer) {
+                    opt.classList.add('correct');
+                } else if (idx === optionIndex && optionIndex !== questions[questionIndex].correctAnswer) {
+                    opt.classList.add('incorrect');
+                }
+            });
+            
+            // 显示反馈
+            const feedback = questionDiv.querySelector('.feedback');
+            if (feedback) {
+                feedback.style.display = 'block';
+            } else {
+                const isCorrect = optionIndex === questions[questionIndex].correctAnswer;
+                const feedbackDiv = document.createElement('div');
+                feedbackDiv.className = `feedback ${isCorrect ? 'correct' : 'incorrect'}`;
+                feedbackDiv.innerHTML = `
+                    <div class="feedback-title">
+                        <span class="feedback-icon">${isCorrect ? '✓' : '✗'}</span>
+                        ${isCorrect ? '回答正确！' : '回答错误！'}
+                    </div>
+                    <div class="feedback-text">${questions[questionIndex].explanation}</div>
+                `;
+                questionDiv.appendChild(feedbackDiv);
+            }
+            
+            updateProgress();
+        };
+        
+        // 更新进度
+        function updateProgress() {
+            const completed = userAnswers.filter(answer => answer !== -1).length;
+            const correct = userAnswers.filter((answer, index) => 
+                answer !== -1 && answer === questions[index].correctAnswer
+            ).length;
+            const score = correct * 4;
+            
+            completedCount.textContent = completed;
+            correctCount.textContent = correct;
+            scoreElement.textContent = score;
+            
+            const progressPercent = (completed / questions.length) * 100;
+            progressFill.style.width = `${progressPercent}%`;
+            
+            // 如果所有题都答完了，显示提交按钮
+            if (completed === questions.length) {
+                submitBtn.style.display = 'inline-block';
+            }
+        }
+        
+        // 更新按钮状态
+        function updateButtons() {
+            prevBtn.disabled = currentQuestionIndex === 0;
+            nextBtn.disabled = currentQuestionIndex === questions.length - 1;
+            
+            // 如果已答完所有题，显示提交按钮
+            const completed = userAnswers.filter(answer => answer !== -1).length;
+            if (completed === questions.length) {
+                submitBtn.style.display = 'inline-block';
+            }
+        }
+        
+        // 显示指定问题
+        function showQuestion(index) {
+            // 隐藏所有问题
+            document.querySelectorAll('.question-container').forEach(q => {
+                q.classList.remove('active');
+            });
+            
+            // 显示当前问题
+            const currentQuestion = document.getElementById(`question-${index}`);
+            if (currentQuestion) {
+                currentQuestion.classList.add('active');
+                currentQuestion.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            
+            currentQuestionIndex = index;
+            updateButtons();
+        }
+        
+        // 下一题
+        nextBtn.addEventListener('click', () => {
+            if (currentQuestionIndex < questions.length - 1) {
+                showQuestion(currentQuestionIndex + 1);
+            }
+        });
+        
+        // 上一题
+        prevBtn.addEventListener('click', () => {
+            if (currentQuestionIndex > 0) {
+                showQuestion(currentQuestionIndex - 1);
+            }
+        });
+        
+        // 提交答卷
+        submitBtn.addEventListener('click', () => {
+            const completed = userAnswers.filter(answer => answer !== -1).length;
+            if (completed < questions.length) {
+                if (confirm(`您还有${questions.length - completed}题未回答，确定要提交吗？`)) {
+                    showResults();
+                }
+            } else {
+                showResults();
+            }
+        });
+        
+        // 重新开始
+        resetBtn.addEventListener('click', () => {
+            if (confirm('确定要重新开始测试吗？所有答题记录将被清除。')) {
+                userAnswers = new Array(questions.length).fill(-1);
+                currentQuestionIndex = 0;
+                resultContainer.style.display = 'none';
+                initQuestions();
+                showQuestion(0);
+            }
+        });
+        
+        // 显示结果
+        function showResults() {
+            const correct = userAnswers.filter((answer, index) => 
+                answer !== -1 && answer === questions[index].correctAnswer
+            ).length;
+            const score = correct * 4;
+            const percentage = Math.round((correct / questions.length) * 100);
+            
+            finalScore.textContent = score;
+            
+            // 根据分数显示不同消息
+            let message = '';
+            if (percentage >= 90) {
+                message = '太棒了！您对机器视觉算法掌握得非常扎实！';
+            } else if (percentage >= 80) {
+                message = '优秀！您对机器视觉算法有很好的理解！';
+            } else if (percentage >= 70) {
+                message = '良好！继续加油，巩固知识点！';
+            } else if (percentage >= 60) {
+                message = '及格！建议重点复习薄弱环节！';
+            } else {
+                message = '需要加强学习，建议系统复习课程内容！';
+            }
+            
+            scoreMessage.textContent = `您答对了${correct}题，得分${score}分（正确率${percentage}%）。${message}`;
+            
+            // 生成答题摘要
+            let summaryHtml = '';
+            userAnswers.forEach((answer, index) => {
+                const isCorrect = answer !== -1 && answer === questions[index].correctAnswer;
+                const isAnswered = answer !== -1;
+                
+                let indicatorClass = 'answer-indicator';
+                if (!isAnswered) {
+                    indicatorClass += ' unanswered';
+                } else if (isCorrect) {
+                    indicatorClass += ' correct';
+                } else {
+                    indicatorClass += ' incorrect';
+                }
+                
+                summaryHtml += `
+                    <div class="${indicatorClass}" onclick="showQuestion(${index})">
+                        ${index + 1}
+                    </div>
+                `;
+            });
+            answerSummary.innerHTML = summaryHtml;
+            
+            // 生成详细答案
+            let allAnswersHtml = '';
+            questions.forEach((q, index) => {
+                const userAnswer = userAnswers[index];
+                const isCorrect = userAnswer !== -1 && userAnswer === q.correctAnswer;
+                
+                allAnswersHtml += `
+                    <div class="answer-item">
+                        <h4>第${index + 1}题: ${q.question}</h4>
+                        <p>正确答案: <span class="correct-answer">${q.options[q.correctAnswer]}</span></p>
+                        ${userAnswer !== -1 ? 
+                            `<p>您的答案: <span class="${isCorrect ? 'correct-answer' : 'user-answer'}">${q.options[userAnswer]}</span></p>` : 
+                            `<p>您的答案: <span class="user-answer">未作答</span></p>`
+                        }
+                        <p>解析: ${q.explanation}</p>
+                    </div>
+                `;
+            });
+            allAnswersContainer.innerHTML = allAnswersHtml;
+            
+            // 显示结果容器
+            resultContainer.style.display = 'block';
+            resultContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // 切换详细答案显示
+        toggleAnswersBtn.addEventListener('click', () => {
+            const isVisible = allAnswersContainer.style.display === 'block';
+            allAnswersContainer.style.display = isVisible ? 'none' : 'block';
+            toggleAnswersBtn.textContent = isVisible ? '查看详细答案' : '隐藏详细答案';
+        });
+        
+        // 初始化
+        initQuestions();
+    </script>
+</body>
+</html>
