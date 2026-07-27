@@ -1,0 +1,122 @@
+[
+  {
+    "id": "bench_20260725_110508",
+    "timestamp": "20260725_110508",
+    "model": "dncnn_best_20260721_192701.pth",
+    "sigma": 25.0,
+    "tta": false,
+    "avg_psnr": 29.13,
+    "count": 10,
+    "duration": 6.3
+  },
+  {
+    "id": "bench_20260725_111444",
+    "timestamp": "20260725_111444",
+    "model": "multi: bilateral, gaussian, median, nlm, wavelet, dncnn, dncnn_tta, dncnn_edge, dncnn_edge_tta",
+    "sigma": 25.0,
+    "tta": false,
+    "avg_psnr": 26.81,
+    "count": 10,
+    "duration": 61.0
+  },
+  {
+    "id": "bench_20260725_111634",
+    "timestamp": "20260725_111634",
+    "model": "multi: bilateral, gaussian, median, nlm, wavelet, dncnn, dncnn_tta, dncnn_edge, dncnn_edge_tta",
+    "sigma": 100.0,
+    "tta": false,
+    "avg_psnr": 14.22,
+    "count": 10,
+    "duration": 58.9
+  },
+  {
+    "id": "bench_20260725_112632",
+    "timestamp": "20260725_112632",
+    "model": "multi: bilateral, gaussian, median, nlm, wavelet, dncnn, dncnn_tta, dncnn_edge, dncnn_edge_tta",
+    "sigma": 100.0,
+    "tta": false,
+    "avg_psnr": 14.22,
+    "count": 10,
+    "duration": 60.3
+  },
+  {
+    "id": "bench_20260725_113154",
+    "timestamp": "20260725_113154",
+    "model": "multi: bilateral, gaussian, median, nlm, wavelet, dncnn, dncnn_tta, dncnn_edge, dncnn_edge_tta",
+    "sigma": 100.0,
+    "tta": false,
+    "avg_psnr": 14.22,
+    "count": 10,
+    "duration": 57.8
+  },
+  {
+    "id": "bench_20260725_113525",
+    "timestamp": "20260725_113525",
+    "model": "multi: bilateral, gaussian, median, nlm, wavelet, dncnn, dncnn_tta, dncnn_edge, dncnn_edge_tta",
+    "sigma": 1.0,
+    "tta": false,
+    "avg_psnr": 31.0,
+    "count": 3,
+    "duration": 17.6
+  },
+  {
+    "id": "bench_20260725_113549",
+    "timestamp": "20260725_113549",
+    "model": "multi: bilateral, gaussian, median, nlm, wavelet, dncnn, dncnn_tta, dncnn_edge, dncnn_edge_tta",
+    "sigma": 25.0,
+    "tta": false,
+    "avg_psnr": 26.47,
+    "count": 1,
+    "duration": 5.7
+  },
+  {
+    "id": "bench_20260726_162743",
+    "timestamp": "20260726_162743",
+    "model": "multi: bilateral, gaussian, median, nlm, wavelet, dncnn, dncnn_tta, dncnn_edge, dncnn_edge_tta",
+    "sigma": 25.0,
+    "tta": false,
+    "avg_psnr": 26.48,
+    "count": 5,
+    "duration": 26.9
+  },
+  {
+    "id": "bench_20260726_162839",
+    "timestamp": "20260726_162839",
+    "model": "multi: bilateral, gaussian, median, nlm, wavelet, dncnn, dncnn_tta, dncnn_edge, dncnn_edge_tta",
+    "sigma": 100.0,
+    "tta": false,
+    "avg_psnr": 14.01,
+    "count": 5,
+    "duration": 26.9
+  },
+  {
+    "id": "bench_20260726_162922",
+    "timestamp": "20260726_162922",
+    "model": "multi: bilateral, gaussian, median, nlm, wavelet, dncnn, dncnn_tta, dncnn_edge, dncnn_edge_tta",
+    "sigma": 50.0,
+    "tta": false,
+    "avg_psnr": 19.97,
+    "count": 5,
+    "duration": 22.4
+  },
+  {
+    "id": "bench_20260726_163002",
+    "timestamp": "20260726_163002",
+    "model": "multi: bilateral, gaussian, median, nlm, wavelet, dncnn, dncnn_tta, dncnn_edge, dncnn_edge_tta",
+    "sigma": 25.0,
+    "tta": false,
+    "avg_psnr": 26.48,
+    "count": 5,
+    "duration": 23.0
+  },
+  {
+    "id": "bench_20260726_163036",
+    "timestamp": "20260726_163036",
+    "model": "multi: bilateral, gaussian, median, nlm, wavelet, dncnn, dncnn_tta, dncnn_edge, dncnn_edge_tta",
+    "sigma": 5.0,
+    "tta": false,
+    "avg_psnr": 31.57,
+    "count": 5,
+    "duration": 22.7
+  }
+]

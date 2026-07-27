@@ -1,0 +1,34 @@
+[
+  {
+    "id": "denoise_20260725_110702",
+    "timestamp": "20260725_110702",
+    "model": "DnCNN+Edge: dncnn_best_20260721_192701.pth",
+    "strength": 1.0,
+    "tta": false,
+    "uncertainty": false,
+    "tile": "256,32",
+    "psnr": 28.78,
+    "duration": 18.438,
+    "width": 6000,
+    "height": 4000,
+    "input_image": "denoise_20260725_110702_input.jpg",
+    "output_image": "denoise_20260725_110702_output.png",
+    "has_uncertainty": false
+  },
+  {
+    "id": "denoise_20260725_111201",
+    "timestamp": "20260725_111201",
+    "model": "DnCNN+Edge: dncnn_best_20260721_192701.pth",
+    "strength": 1.0,
+    "tta": false,
+    "uncertainty": false,
+    "tile": "256,32",
+    "psnr": 31.45,
+    "duration": 17.209,
+    "width": 6000,
+    "height": 4000,
+    "input_image": "denoise_20260725_111201_input.jpg",
+    "output_image": "denoise_20260725_111201_output.png",
+    "has_uncertainty": false
+  }
+]

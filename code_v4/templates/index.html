@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ t.get('header.title', 'DnCNN Denoising Tool') }}</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:#0d1117;color:#c9d1d9;min-height:100vh}
+.app-header{background:#161b22;border-bottom:1px solid #30363d;padding:16px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
+.app-header h1{font-size:18px;font-weight:600;color:#f0f6fc}
+.app-header .device-badge{font-size:11px;background:#1f6feb22;color:#58a6ff;padding:2px 10px;border-radius:999px;border:1px solid #1f6feb44}
+.app-header .model-count{font-size:12px;color:#8b949e}
+.lang-btn{font-size:12px;background:#21262d;color:#8b949e;border:1px solid #30363d;border-radius:6px;padding:4px 10px;cursor:pointer;transition:all .15s}
+.lang-btn:hover{background:#30363d;color:#c9d1d9}
+.tab-bar{background:#161b22;border-bottom:1px solid #30363d;display:flex;padding:0 24px;position:sticky;top:57px;z-index:99}
+.tab-btn{padding:10px 20px;background:none;border:none;color:#8b949e;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.tab-btn:hover{color:#c9d1d9;background:#1c2128}
+.tab-btn.active{color:#f0f6fc;border-bottom-color:#58a6ff}
+.tab-content{display:none;padding:24px;max-width:1200px;margin:0 auto}
+.tab-content.active{display:block}
+.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:20px;margin-bottom:16px}
+.card h2{font-size:15px;font-weight:600;margin-bottom:14px;color:#f0f6fc}
+.card h3{font-size:13px;font-weight:600;margin-bottom:10px;color:#c9d1d9}
+label{display:block;font-size:12px;color:#8b949e;margin-bottom:4px}
+.form-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.form-group{flex:1;min-width:140px}
+input,select,textarea{width:100%;padding:6px 10px;font-size:13px;background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;outline:none;transition:border-color .15s}
+input:focus,select:focus{border-color:#58a6ff}
+input[type="checkbox"]{width:auto;margin-right:6px}
+input[type="file"]{display:none}
+textarea{font-family:'SFMono-Regular',Consolas,monospace;font-size:12px;resize:vertical;min-height:60px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;font-size:13px;font-weight:500;border:1px solid;border-radius:6px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-primary{background:#238636;color:#fff;border-color:#2ea043}
+.btn-primary:hover{background:#2ea043}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-secondary{background:#21262d;color:#c9d1d9;border-color:#30363d}
+.btn-secondary:hover{background:#30363d}
+.btn-danger{background:#da3633;color:#fff;border-color:#f85149}
+.btn-danger:hover{background:#f85149}
+.btn-sm{padding:4px 10px;font-size:12px}
+.upload-zone{border:2px dashed #30363d;border-radius:8px;padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s;background:#0d1117}
+.upload-zone:hover{border-color:#58a6ff;background:#161b22}
+.upload-zone.dragover{border-color:#2ea043;background:#23863622}
+.upload-zone.has-image{padding:8px}
+.upload-zone img{max-height:200px;border-radius:4px}
+.upload-zone .placeholder{color:#8b949e;font-size:14px}
+.upload-zone .placeholder svg{width:48px;height:48px;margin-bottom:8px;opacity:.5}
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.result-grid img{width:100%;border-radius:4px;border:1px solid #30363d}
+.result-metrics{display:flex;gap:12px;flex-wrap:nowrap;margin-top:12px}
+.metric-card{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:10px 14px;text-align:center;flex:0 1 auto;min-width:0}
+.metric-card .value{font-size:20px;font-weight:700;color:#58a6ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.metric-card .label{font-size:11px;color:#8b949e;margin-top:2px}
+.progress-bar{height:6px;background:#21262d;border-radius:3px;overflow:hidden;margin:8px 0}
+.progress-bar .fill{height:100%;width:0%;background:#2ea043;border-radius:3px;transition:width .3s}
+.log-box{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:12px;font-family:'SFMono-Regular',Consolas,monospace;font-size:11px;color:#8b949e;max-height:300px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;line-height:1.5}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid #21262d}
+th{color:#8b949e;font-weight:600;font-size:12px;text-transform:uppercase}
+tr:hover td{background:#1c2128}
+.text-muted{color:#8b949e;font-size:12px}
+.text-success{color:#2ea043}
+.text-error{color:#f85149}
+.flex{display:flex}
+.gap-2{gap:8px}
+.gap-4{gap:16px}
+.mt-2{margin-top:8px}
+.mt-4{margin-top:16px}
+.mb-2{margin-bottom:8px}
+.ml-auto{margin-left:auto}
+.hidden{display:none!important}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid #30363d;border-top-color:#58a6ff;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.pipeline-stage{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:10px;margin-bottom:8px}
+.pipeline-stage h4{margin:0 0 6px 0;font-size:13px;color:#c9d1d9}
+.chart-container{margin-top:12px}
+.chart-container canvas{width:100%;background:#0d1117;border:1px solid #30363d;border-radius:4px}
+
+/* ── zoom containers ── */
+.zoom-viewport{overflow:hidden;position:relative;width:100%;height:400px;cursor:grab;border:1px solid #30363d;border-radius:4px;background:#0d1117}
+.zoom-viewport:active{cursor:grabbing}
+.zoom-pane{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;transform-origin:0 0;transition:transform .05s ease}
+.zoom-pane img{max-width:100%;max-height:100%;object-fit:contain;pointer-events:none}
+.zoom-reset{position:absolute;top:6px;right:6px;z-index:5;width:28px;height:28px;border-radius:6px;border:1px solid #30363d;background:#21262d;color:#c9d1d9;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:.7}
+.zoom-reset:hover{opacity:1;background:#30363d}
+
+/* ── history panel ── */
+#historyOverlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:200;background:rgba(0,0,0,0.5)}
+#historyPanel{position:fixed;top:0;right:-420px;width:400px;height:100%;background:#161b22;border-left:1px solid #30363d;z-index:201;transition:right .25s;display:flex;flex-direction:column}
+#historyPanel.open{right:0}
+.hp-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #30363d;flex-shrink:0}
+.hp-header h2{font-size:16px;font-weight:600;color:#f0f6fc}
+.hp-tabs{display:flex;border-bottom:1px solid #30363d;flex-shrink:0}
+.hp-tab{flex:1;padding:10px;background:none;border:none;border-bottom:2px solid transparent;color:#8b949e;font-size:13px;cursor:pointer;transition:all .15s}
+.hp-tab:hover{color:#c9d1d9;background:#1c2128}
+.hp-tab.active{color:#f0f6fc !important;border-bottom-color:#58a6ff !important}
+#historyContent{flex:1;overflow-y:auto;padding:12px 16px}
+.h-entry{background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:10px 12px;margin-bottom:8px;font-size:12px}
+.h-entry .h-time{color:#8b949e;font-size:11px;margin-bottom:4px}
+.h-entry .h-row{display:flex;gap:8px;align-items:center;margin-top:3px}
+.h-entry .h-label{color:#8b949e;min-width:50px}
+.h-entry .h-value{color:#c9d1d9;font-weight:500}
+.h-entry .h-thumbs{display:flex;gap:6px;margin-top:6px}
+.h-entry .h-thumbs img{width:80px;height:60px;object-fit:cover;border-radius:4px;border:1px solid #30363d;cursor:pointer}
+.h-empty{color:#8b949e;text-align:center;padding:40px 20px;font-size:13px}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <h1>{{ t.get('header.title', 'DnCNN Denoising Tool') }}</h1>
+  <span class="device-badge" id="deviceBadge" data-i18n="header.deviceLoading">{{ t.get('header.deviceLoading', 'loading...') }}</span>
+  <span class="model-count" id="modelCount"></span>
+  <span class="ml-auto"></span>
+  <button class="lang-btn" id="historyBtn" data-i18n="header.history">{{ t.get('header.history', 'History') }}</button>
+  <button class="lang-btn" id="langToggle" data-i18n="header.langToggle">{{ t.get('header.langToggle', '中文') }}</button>
+</header>
+
+<!-- history panel -->
+<div id="historyOverlay" class="hidden"></div>
+<div id="historyPanel">
+  <div class="hp-header">
+    <h2 data-i18n="history.title">{{ t.get('history.title', 'History') }}</h2>
+    <button id="historyClose" class="lang-btn" style="font-size:16px">&times;</button>
+  </div>
+  <div class="hp-tabs">
+    <button class="hp-tab active" data-htab="denoise" data-i18n="history.tabDenoise">{{ t.get('history.tabDenoise', 'Denoise') }}</button>
+    <button class="hp-tab" data-htab="benchmark" data-i18n="history.tabBenchmark">{{ t.get('history.tabBenchmark', 'Benchmark') }}</button>
+    <button class="hp-tab" data-htab="train" data-i18n="history.tabTrain">{{ t.get('history.tabTrain', 'Train') }}</button>
+  </div>
+  <div id="historyContent"></div>
+</div>
+
+<nav class="tab-bar" id="tabBar">
+  <button class="tab-btn active" data-tab="denoise" data-i18n="tab.denoise">{{ t.get('tab.denoise', 'Denoise') }}</button>
+  <button class="tab-btn" data-tab="train" data-i18n="tab.train">{{ t.get('tab.train', 'Train') }}</button>
+  <button class="tab-btn" data-tab="benchmark" data-i18n="tab.benchmark">{{ t.get('tab.benchmark', 'Benchmark') }}</button>
+</nav>
+
+<!-- DENOISE -->
+<div class="tab-content active" id="tabDenoise">
+  <div class="card">
+    <h2 data-i18n="denoise.upload.title">{{ t.get('denoise.upload.title', 'Upload Image') }}</h2>
+    <div class="upload-zone" id="uploadZone">
+      <div class="placeholder" id="uploadPlaceholder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+        <p data-i18n="denoise.upload.clickOrDrag">{{ t.get('denoise.upload.clickOrDrag', 'Click or drag an image here') }}</p>
+        <p style="font-size:12px;margin-top:4px" data-i18n="denoise.upload.formats">{{ t.get('denoise.upload.formats', 'PNG / JPG / BMP / TIFF up to 64MB') }}</p>
+      </div>
+      <img id="uploadPreview" class="hidden" alt="preview">
+    </div>
+    <input type="file" id="fileInput" accept="image/*">
+  </div>
+
+  <div class="card">
+    <h2 data-i18n="denoise.params.title">{{ t.get('denoise.params.title', 'Model & Parameters') }}</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label data-i18n="denoise.params.modelType">{{ t.get('denoise.params.modelType', 'Model type') }}</label>
+        <select id="modelType">
+          <option value="dncnn" data-i18n="denoise.params.modelDncnn">{{ t.get('denoise.params.modelDncnn', 'DnCNN only') }}</option>
+          <option value="dncnn_edge" data-i18n="denoise.params.modelDncnnEdge">{{ t.get('denoise.params.modelDncnnEdge', 'DnCNN + EdgeEnhance') }}</option>
+          <option value="joint" data-i18n="denoise.params.modelJoint">{{ t.get('denoise.params.modelJoint', 'Joint model') }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="denoise.params.modelSelect">{{ t.get('denoise.params.modelSelect', 'DnCNN / Joint model') }}</label>
+        <select id="modelSelect"><option value="" data-i18n="denoise.selectPlaceholder">{{ t.get('denoise.selectPlaceholder', '-- select --') }}</option></select>
+      </div>
+      <div class="form-group" id="edgeModelGroup">
+        <label data-i18n="denoise.params.edgeModel">{{ t.get('denoise.params.edgeModel', 'EdgeEnhance model') }}</label>
+        <select id="edgeModelSelect"><option value="" data-i18n="denoise.selectPlaceholder">{{ t.get('denoise.selectPlaceholder', '-- select --') }}</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label data-i18n="denoise.params.strength">{{ t.get('denoise.params.strength', 'Denoising strength') }}</label>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="range" id="strength" min="0" max="2" step="0.05" value="1.0" style="flex:1">
+          <span class="text-muted" id="strengthLabel" style="min-width:36px;text-align:right">1.00</span>
+        </div>
+        <label style="display:flex;align-items:center;gap:6px;margin-top:4px;font-size:12px;color:#8b949e;cursor:pointer">
+          <input type="checkbox" id="autoStrength">
+          <span data-i18n="denoise.params.autoStrength">{{ t.get('denoise.params.autoStrength', 'Auto (based on ISO)') }}</span>
+          <span id="autoStrengthInfo" class="hidden" style="color:#58a6ff;font-size:11px"></span>
+        </label>
+      </div>
+      <div class="form-group">
+        <label data-i18n="denoise.params.resize">{{ t.get('denoise.params.resize', 'Resize (max px, 0 = off)') }}</label>
+        <input type="number" id="resize" min="0" max="4096" step="32" value="0" data-i18n-placeholder="denoise.params.resizePlaceholder" placeholder="{{ t.get('denoise.params.resizePlaceholder', '0 = off') }}">
+      </div>
+      <div class="form-group">
+        <label data-i18n="denoise.params.tile">{{ t.get('denoise.params.tile', 'Tiling \"size,overlap\"') }}</label>
+        <input type="text" id="tile" value="256,32" data-i18n-placeholder="denoise.params.tilePlaceholder" placeholder="{{ t.get('denoise.params.tilePlaceholder', 'e.g. \"256,32\"') }}">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group" style="flex:0 0 auto;display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="ttaCheck">
+        <label for="ttaCheck" style="margin:0" data-i18n="denoise.params.tta">{{ t.get('denoise.params.tta', 'TTA (4-way flip)') }}</label>
+      </div>
+      <div class="form-group" style="flex:0 0 auto;display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="uncertaintyCheck">
+        <label for="uncertaintyCheck" style="margin:0" data-i18n="denoise.params.uncertainty">{{ t.get('denoise.params.uncertainty', 'Uncertainty map') }}</label>
+      </div>
+    </div>
+    <div class="mt-2">
+      <button class="btn btn-primary" id="denoiseBtn" disabled data-i18n="denoise.runBtn">{{ t.get('denoise.runBtn', 'Denoise') }}</button>
+      <span class="spinner hidden" id="denoiseSpinner"></span>
+    </div>
+  </div>
+
+  <div class="card hidden" id="denoiseResultCard">
+    <h2 data-i18n="denoise.result.title">{{ t.get('denoise.result.title', 'Result') }}</h2>
+    <div class="result-grid">
+      <div class="zoom-wrapper">
+        <h3 data-i18n="denoise.result.input">{{ t.get('denoise.result.input', 'Input') }}</h3>
+        <div class="zoom-viewport" id="zvInput">
+          <div class="zoom-pane" id="zpInput"><img id="resultInput" alt="input"></div>
+          <button class="zoom-reset hidden" id="zrInput" title="Reset zoom">↺</button>
+        </div>
+      </div>
+      <div class="zoom-wrapper">
+        <h3 data-i18n="denoise.result.output">{{ t.get('denoise.result.output', 'Denoised') }}</h3>
+        <div class="zoom-viewport" id="zvOutput">
+          <div class="zoom-pane" id="zpOutput"><img id="resultOutput" alt="output"></div>
+          <button class="zoom-reset hidden" id="zrOutput" title="Reset zoom">↺</button>
+        </div>
+      </div>
+    </div>
+    <div id="uncertaintyContainer" class="mt-2 hidden">
+      <h3 data-i18n="denoise.result.uncertainty">{{ t.get('denoise.result.uncertainty', 'Uncertainty (variance overlay)') }}</h3>
+      <img id="resultUncertainty" alt="uncertainty" style="max-width:400px;border-radius:4px;border:1px solid #30363d">
+    </div>
+    <div class="result-metrics" id="resultMetrics"></div>
+  </div>
+</div>
+
+<!-- TRAIN -->
+<div class="tab-content" id="tabTrain">
+  <div class="card">
+    <h2 data-i18n="train.config.title">{{ t.get('train.config.title', 'Training Configuration') }}</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label data-i18n="train.config.stage">{{ t.get('train.config.stage', 'Stage') }}</label>
+        <select id="trainStage">
+          <option value="1" data-i18n="train.config.stage1">{{ t.get('train.config.stage1', 'Stage 1 \u2014 DnCNN denoising') }}</option>
+          <option value="2" data-i18n="train.config.stage2">{{ t.get('train.config.stage2', 'Stage 2 \u2014 EdgeEnhance') }}</option>
+          <option value="3" data-i18n="train.config.stage3">{{ t.get('train.config.stage3', 'Stage 3 \u2014 Joint fine-tune') }}</option>
+          <option value="pipeline" data-i18n="train.config.pipeline">{{ t.get('train.config.pipeline', 'Pipeline (1\u21922\u21923)') }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label data-i18n="train.config.dataPath">{{ t.get('train.config.dataPath', 'Training data path') }}</label>
+        <input type="text" id="trainData" data-i18n-placeholder="train.config.dataPlaceholder" placeholder="{{ t.get('train.config.dataPlaceholder', 'e.g. ../Div2k/DIV2K_train_HR') }}" value="..\Div2k\DIV2K_train_HR">
+      </div>
+      <div class="form-group">
+        <label data-i18n="train.config.valPath">{{ t.get('train.config.valPath', 'Validation data path (optional)') }}</label>
+        <input type="text" id="trainVal" data-i18n-placeholder="train.config.valPlaceholder" placeholder="{{ t.get('train.config.valPlaceholder', 'e.g. ../Div2k/DIV2K_valid_HR') }}" value="..\Div2k\DIV2K_valid_HR">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label data-i18n="train.config.epochs">{{ t.get('train.config.epochs', 'Epochs') }}</label>
+        <input type="number" id="trainEpochs" value="10" min="1" max="500">
+      </div>
+      <div class="form-group">
+        <label data-i18n="train.config.batchSize">{{ t.get('train.config.batchSize', 'Batch size') }}</label>
+        <input type="number" id="trainBatch" value="8" min="1" max="128">
+      </div>
+      <div class="form-group">
+        <label data-i18n="train.config.lr">{{ t.get('train.config.lr', 'Learning rate') }}</label>
+        <input type="number" id="trainLR" value="0.001" step="0.0001" min="1e-6" max="1">
+      </div>
+      <div class="form-group">
+        <label data-i18n="train.config.sigma">{{ t.get('train.config.sigma', 'Noise sigma (Stage 1)') }}</label>
+        <input type="number" id="trainSigma" value="25" min="0" max="255">
+      </div>
+      <div class="form-group">
+        <label data-i18n="train.config.evalSigmas">{{ t.get('train.config.evalSigmas', 'Eval sigmas (comma-sep)') }}</label>
+        <input type="text" id="trainEvalSigmas" value="" placeholder="25,50,75,100">
+      </div>
+      <div class="form-group">
+        <label><input type="checkbox" id="trainDeep"> <span data-i18n="train.config.deep">{{ t.get('train.config.deep', 'Deep model (20 layers + attention)') }}</span></label>
+      </div>
+    </div>
+    <div class="form-row hidden" id="trainModelRow">
+      <div class="form-group">
+        <label data-i18n="train.config.dncnnModel">{{ t.get('train.config.dncnnModel', 'DnCNN model (Stage 2/3)') }}</label>
+        <select id="trainDncnnModel"><option value="" data-i18n="train.selectPlaceholder">{{ t.get('train.selectPlaceholder', '-- select --') }}</option></select>
+      </div>
+      <div class="form-group hidden" id="trainEdgeGroup">
+        <label data-i18n="train.config.edgeModel">{{ t.get('train.config.edgeModel', 'Edge model (Stage 3)') }}</label>
+        <select id="trainEdgeModel"><option value="" data-i18n="train.selectPlaceholder">{{ t.get('train.selectPlaceholder', '-- select --') }}</option></select>
+      </div>
+    </div>
+    <!-- pipeline config (3 stages) -->
+    <div id="trainPipelineConfig" class="hidden">
+      <hr style="border-color:#30363d;margin:12px 0">
+      <div class="pipeline-stage">
+        <h4 data-i18n="train.config.stage1Params">{{ t.get('train.config.stage1Params', 'Stage 1 \u2014 DnCNN Denoising') }}</h4>
+        <div class="form-row">
+          <div class="form-group"><label data-i18n="train.config.epochs">Epochs</label><input type="number" class="pipe-ep" value="100" min="1" max="500"></div>
+          <div class="form-group"><label data-i18n="train.config.lr">LR</label><input type="number" class="pipe-lr" value="0.001" step="0.0001" min="1e-6" max="1"></div>
+          <div class="form-group"><label data-i18n="train.config.sigma">Sigma</label><input type="number" class="pipe-s1-sig" value="100" min="0" max="255"></div>
+          <div class="form-group"><label data-i18n="train.config.evalSigmas">Eval sigmas</label><input type="text" class="pipe-s1-eval" value="25,50,75,100" placeholder="25,50,75,100"></div>
+          <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:4px">
+            <label><input type="checkbox" class="pipe-s1-deep"> <span data-i18n="train.config.deep">{{ t.get('train.config.deep', 'Deep model') }}</span></label>
+          </div>
+      </div>
+      <div class="pipeline-stage">
+        <h4 data-i18n="train.config.stage2Params">{{ t.get('train.config.stage2Params', 'Stage 2 \u2014 EdgeEnhance') }}</h4>
+        <div class="form-row">
+          <div class="form-group"><label data-i18n="train.config.epochs">Epochs</label><input type="number" class="pipe-ep" value="50" min="1" max="500"></div>
+          <div class="form-group"><label data-i18n="train.config.lr">LR</label><input type="number" class="pipe-lr" value="0.0003" step="0.0001" min="1e-6" max="1"></div>
+        </div>
+      </div>
+      <div class="pipeline-stage">
+        <h4 data-i18n="train.config.stage3Params">{{ t.get('train.config.stage3Params', 'Stage 3 \u2014 Joint Fine-tune') }}</h4>
+        <div class="form-row">
+          <div class="form-group"><label data-i18n="train.config.epochs">Epochs</label><input type="number" class="pipe-ep" value="20" min="1" max="500"></div>
+          <div class="form-group"><label data-i18n="train.config.lr">LR</label><input type="number" class="pipe-lr" value="0.00005" step="0.00001" min="1e-7" max="1"></div>
+        </div>
+      </div>
+    </div>
+    <div class="mt-2">
+      <button class="btn btn-primary" id="trainBtn" data-i18n="train.runBtn">{{ t.get('train.runBtn', 'Start Training') }}</button>
+      <span class="spinner hidden" id="trainSpinner"></span>
+    </div>
+  </div>
+
+  <div class="card hidden" id="trainProgressCard">
+    <h2 data-i18n="train.progress.title">{{ t.get('train.progress.title', 'Training Progress') }}</h2>
+    <div class="progress-bar"><div class="fill" id="trainProgressFill"></div></div>
+    <div id="trainStatus" class="text-muted mb-2" data-i18n="train.progress.starting">{{ t.get('train.progress.starting', 'Initializing...') }}</div>
+    <div class="log-box" id="trainLog" data-i18n="train.progress.waiting">{{ t.get('train.progress.waiting', 'Waiting for training to start...') }}</div>
+    <div class="chart-container hidden" id="trainChartContainer">
+      <h4 style="margin-top:10px;margin-bottom:6px" data-i18n="train.chart.title">{{ t.get('train.chart.title', 'Loss Curve') }}</h4>
+      <canvas id="trainChart" height="200"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- BENCHMARK -->
+<div class="tab-content" id="tabBenchmark">
+  <div class="card">
+    <h2 data-i18n="bench.config.title">{{ t.get('bench.config.title', 'Benchmark Configuration') }}</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label data-i18n="bench.config.dataPath">{{ t.get('bench.config.dataPath', 'Test data path') }}</label>
+        <input type="text" id="benchData" data-i18n-placeholder="bench.config.dataPlaceholder" placeholder="{{ t.get('bench.config.dataPlaceholder', 'e.g. ../Div2k/DIV2K_valid_HR') }}" value="..\Div2k\DIV2K_valid_HR">
+      </div>
+      <div class="form-group">
+        <label data-i18n="bench.config.sigma">{{ t.get('bench.config.sigma', 'Noise sigma') }}</label>
+        <input type="number" id="benchSigma" value="25" min="0" max="255">
+      </div>
+      <div class="form-group">
+        <label data-i18n="bench.config.maxImages">{{ t.get('bench.config.maxImages', 'Max images (0 = all)') }}</label>
+        <input type="number" id="benchMaxImages" value="0" min="0" max="10000">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 data-i18n="bench.config.models">{{ t.get('bench.config.models', 'Deep Learning Models') }}</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label data-i18n="bench.config.model">{{ t.get('bench.config.model', 'DnCNN model') }}</label>
+        <select id="benchDncnnSelect"><option value="" data-i18n="bench.selectPlaceholder">{{ t.get('bench.selectPlaceholder', '-- select --') }}</option></select>
+      </div>
+      <div class="form-group" id="benchEdgeGroup">
+        <label data-i18n="bench.config.edgeModel">{{ t.get('bench.config.edgeModel', 'Edge model (optional)') }}</label>
+        <select id="benchEdgeSelect"><option value="" data-i18n="bench.selectPlaceholder">{{ t.get('bench.selectPlaceholder', '-- select --') }}</option></select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 data-i18n="bench.config.methods">{{ t.get('bench.config.methods', 'Methods to Compare') }}</h2>
+    <div style="display:flex;gap:24px;flex-wrap:wrap">
+      <div>
+        <h3 style="font-size:13px;color:#c9d1d9;margin-bottom:8px" data-i18n="bench.methods.traditional">{{ t.get('bench.methods.traditional', 'Traditional') }}</h3>
+        <label style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:13px;cursor:pointer"><input type="checkbox" class="bench-method" value="bilateral" checked> Bilateral</label>
+        <label style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:13px;cursor:pointer"><input type="checkbox" class="bench-method" value="gaussian" checked> Gaussian</label>
+        <label style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:13px;cursor:pointer"><input type="checkbox" class="bench-method" value="median" checked> Median</label>
+        <label style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:13px;cursor:pointer"><input type="checkbox" class="bench-method" value="nlm" checked> NLM</label>
+        <label style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:13px;cursor:pointer"><input type="checkbox" class="bench-method" value="wavelet" checked> Wavelet</label>
+      </div>
+      <div>
+        <h3 style="font-size:13px;color:#c9d1d9;margin-bottom:8px" data-i18n="bench.methods.dncnn">{{ t.get('bench.methods.dncnn', 'DnCNN') }}</h3>
+        <label style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:13px;cursor:pointer"><input type="checkbox" class="bench-method" value="dncnn" checked> DnCNN</label>
+        <label style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:13px;cursor:pointer"><input type="checkbox" class="bench-method" value="dncnn_tta"> DnCNN + TTA</label>
+      </div>
+      <div id="benchEdgeMethods">
+        <h3 style="font-size:13px;color:#c9d1d9;margin-bottom:8px" data-i18n="bench.methods.edge">{{ t.get('bench.methods.edge', 'DnCNN+Edge') }}</h3>
+        <label style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:13px;cursor:pointer"><input type="checkbox" class="bench-method" value="dncnn_edge" checked> DnCNN+Edge</label>
+        <label style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:13px;cursor:pointer"><input type="checkbox" class="bench-method" value="dncnn_edge_tta"> DnCNN+Edge + TTA</label>
+      </div>
+    </div>
+    <div class="mt-2">
+      <button class="btn btn-primary" id="benchBtn" data-i18n="bench.runBtn">{{ t.get('bench.runBtn', 'Run Benchmark') }}</button>
+      <span class="spinner hidden" id="benchSpinner"></span>
+    </div>
+  </div>
+
+  <div class="card hidden" id="benchResultCard">
+    <h2 data-i18n="bench.result.title">{{ t.get('bench.result.title', 'Benchmark Comparison') }}</h2>
+    <div id="benchSummary" class="mb-2"></div>
+    <div id="benchTableWrap" style="overflow-x:auto">
+      <table id="benchTable"><thead id="benchTableHead"></thead><tbody id="benchTableBody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ i18n — translations loaded from JSON config files ══
+const ALL_T = {{ all_t_json|safe }};
+const _LANG_LIST = {{ available_langs|tojson }};
+let CURRENT_LANG = '{{ lang }}';
+
+function t(key) {
+  const langTable = ALL_T[CURRENT_LANG] || ALL_T['en'] || {};
+  return langTable[key] !== undefined ? langTable[key] : key;
+}
+
+function applyLanguage() {
+  document.documentElement.lang = CURRENT_LANG;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    el.placeholder = t(key);
+  });
+  document.getElementById('langToggle').textContent = t('header.langToggle');
+  const mc = document.getElementById('modelCount');
+  if (mc.dataset.count !== undefined) mc.textContent = t('models.count') + ' ' + mc.dataset.count;
+  ['modelSelect','edgeModelSelect','benchDncnnSelect','benchEdgeSelect','trainDncnnModel','trainEdgeModel'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const first = sel.querySelector('option[value=""]');
+    if (first) { const k = first.getAttribute('data-i18n'); if (k) first.textContent = t(k); }
+  });
+  document.querySelectorAll('#modelType option,#trainStage option').forEach(o => {
+    const k = o.getAttribute('data-i18n'); if (k) o.textContent = t(k);
+  });
+}
+
+function setLanguage(lang) {
+  if (lang === CURRENT_LANG || !ALL_T[lang]) return;
+  CURRENT_LANG = lang;
+  applyLanguage();
+  document.cookie = 'lang=' + lang + ';path=/;max-age=31536000';
+  localStorage.setItem('lang', lang);
+}
+
+// ══ app logic ══
+let CURRENT_FILE = null;
+
+document.getElementById('tabBar').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab' + btn.dataset.tab.charAt(0).toUpperCase() + btn.dataset.tab.slice(1)).classList.add('active');
+});
+
+document.getElementById('langToggle').addEventListener('click', () => {
+  const langs = _LANG_LIST.filter(l => l !== CURRENT_LANG);
+  if (langs.length) setLanguage(langs[0]);
+});
+
+// upload
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+const preview = document.getElementById('uploadPreview');
+const placeholder = document.getElementById('uploadPlaceholder');
+
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.classList.remove('dragover');
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
+
+function handleFile(file) {
+  CURRENT_FILE = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    preview.src = e.target.result;
+    preview.classList.remove('hidden');
+    placeholder.classList.add('hidden');
+    uploadZone.classList.add('has-image');
+    document.getElementById('denoiseBtn').disabled = document.getElementById('modelSelect').value === '';
+  };
+  reader.readAsDataURL(file);
+  // trigger auto-strength if enabled
+  if (document.getElementById('autoStrength').checked) readISOAutoStrength(file);
+}
+
+// ══ auto strength based on EXIF ISO ══
+function readISOAutoStrength(file) {
+  const info = document.getElementById('autoStrengthInfo');
+  const slider = document.getElementById('strength');
+  const label = document.getElementById('strengthLabel');
+  // only JPEG has EXIF
+  if (!file.type.match(/^image\/jpe?g$/i)) {
+    info.textContent = '(' + t('denoise.autoStrength.noExif') + ')';
+    info.classList.remove('hidden');
+    slider.value = '1.0'; label.textContent = '1.00';
+    slider.disabled = false;
+    return;
+  }
+  // read first 64KB for EXIF
+  const slice = file.slice(0, 65536);
+  const r = new FileReader();
+  r.onload = function(e) {
+    const iso = parseEXIF_ISO(new DataView(e.target.result));
+    if (iso !== null && iso > 0) {
+      // strength = min(1.20, max(0, (iso - 400) / 10000))
+      let s = Math.min(1.20, Math.max(0, (iso - 400) / 10000));
+      s = Math.round(s * 100) / 100;
+      slider.value = String(s);
+      label.textContent = s.toFixed(2);
+      if (s === 0) {
+        info.textContent = 'ISO ' + iso + ' &rarr; ' + t('denoise.autoStrength.skip');
+      } else {
+        info.textContent = 'ISO ' + iso + ' &rarr; ' + s.toFixed(2);
+      }
+    } else {
+      info.textContent = '(' + t('denoise.autoStrength.noIso') + ')';
+      slider.value = '1.0'; label.textContent = '1.00';
+    }
+    info.classList.remove('hidden');
+    slider.disabled = (iso !== null && iso > 0 && parseFloat(slider.value) > 0);
+  };
+  r.readAsArrayBuffer(slice);
+}
+
+function parseEXIF_ISO(view) {
+  // JPEG SOI
+  if (view.getUint16(0) !== 0xFFD8) return null;
+  let off = 2;
+  while (off + 8 < view.byteLength) {
+    if (view.getUint8(off) !== 0xFF) break;
+    const marker = view.getUint8(off + 1);
+    const segLen = view.getUint16(off + 2);
+    if (marker === 0xE1 && segLen >= 8) { // APP1 EXIF
+      // "Exif\0\0"
+      if (view.getUint32(off + 4) === 0x45786966 && view.getUint16(off + 8) === 0) {
+        return _parseExifTIFF(view, off + 10);
+      }
+    }
+    off += 2 + segLen;
+  }
+  return null;
+}
+
+function _parseExifTIFF(view, start) {
+  const endian = view.getUint16(start);
+  const le = endian === 0x4949; // "II" = little-endian
+  const R16 = (o) => le ? view.getUint16(o, 1) : view.getUint16(o, 0);
+  const R32 = (o) => le ? view.getUint32(o, 1) : view.getUint32(o, 0);
+  if (endian !== 0x4949 && endian !== 0x4D4D) return null;
+  const tiffOff = start + 2;
+  const ifd0Off = tiffOff + R32(tiffOff);
+  const entries = R16(ifd0Off);
+  for (let i = 0; i < entries; i++) {
+    const eo = ifd0Off + 2 + i * 12;
+    const tag = R16(eo);
+    if (tag === 0x8769) { // ExifIFD pointer
+      const subOff = tiffOff + R32(eo + 8);
+      const subCnt = R16(subOff);
+      for (let j = 0; j < subCnt; j++) {
+        const so = subOff + 2 + j * 12;
+        const st = R16(so);
+        if (st === 0x8827 || st === 0x8833 || st === 0x8822) {
+          const typ = R16(so + 2);
+          if (typ === 3) return R16(so + 8);       // SHORT
+          if (typ === 4) return R32(so + 8);       // LONG
+        }
+      }
+    }
+  }
+  return null;
+}
+
+// auto-strength checkbox event
+document.getElementById('autoStrength').addEventListener('change', function() {
+  const slider = document.getElementById('strength');
+  const label = document.getElementById('strengthLabel');
+  const info = document.getElementById('autoStrengthInfo');
+  if (this.checked) {
+    if (CURRENT_FILE) readISOAutoStrength(CURRENT_FILE);
+    else info.classList.add('hidden');
+  } else {
+    slider.disabled = false;
+    info.classList.add('hidden');
+    slider.value = '1.0'; label.textContent = '1.00';
+  }
+});
+
+// models
+async function loadModels() {
+  try {
+    const res = await fetch('/api/models');
+    const data = await res.json();
+    const models = data.models || [];
+    const mc = document.getElementById('modelCount');
+    mc.dataset.count = models.length;
+    mc.textContent = t('models.count') + ' ' + models.length;
+
+    const dncnn = models.filter(m => m.type === 'dncnn');
+    const edge = models.filter(m => m.type === 'edge');
+    const joint = models.filter(m => m.type === 'joint');
+    const unknown = models.filter(m => m.type === 'unknown');
+
+    function populate(sel, list) {
+      sel.innerHTML = '<option value="" data-i18n="denoise.selectPlaceholder">' + t('denoise.selectPlaceholder') + '</option>';
+      list.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.path; opt.textContent = m.name; sel.appendChild(opt);
+      });
+    }
+    populate(document.getElementById('modelSelect'), [...dncnn, ...joint, ...unknown]);
+    populate(document.getElementById('edgeModelSelect'), edge);
+    populate(document.getElementById('benchDncnnSelect'), [...dncnn, ...joint, ...unknown]);
+    populate(document.getElementById('benchEdgeSelect'), edge);
+    populate(document.getElementById('trainDncnnModel'), [...dncnn, ...joint, ...unknown]);
+    populate(document.getElementById('trainEdgeModel'), edge);
+
+    document.getElementById('modelType').dispatchEvent(new Event('change'));
+    document.getElementById('benchEdgeSelect').dispatchEvent(new Event('change'));
+    document.getElementById('deviceBadge').textContent =
+      navigator.hardwareConcurrency ? t('device.cudaDetected') : t('device.cpu');
+  } catch (e) {
+    console.error('load models:', e);
+    const mc = document.getElementById('modelCount');
+    mc.dataset.count = '?'; mc.textContent = t('models.count') + ' ?';
+  }
+}
+
+document.getElementById('modelType').addEventListener('change', function() {
+  const g = document.getElementById('edgeModelGroup');
+  const s = document.getElementById('modelSelect');
+  if (this.value === 'joint') {
+    g.style.display = 'none';
+    Array.from(s.options).forEach(o => {
+      const isJ = o.textContent.toLowerCase().startsWith('joint');
+      o.disabled = this.value === 'joint' && !isJ && o.value !== '';
+      if (this.value === 'joint' && !isJ && o.selected) o.selected = false;
+    });
+  } else { g.style.display = ''; Array.from(s.options).forEach(o => o.disabled = false); }
+  checkDenoiseReady();
+});
+
+document.getElementById('strength').addEventListener('input', function() {
+  document.getElementById('strengthLabel').textContent = this.value;
+});
+
+document.getElementById('modelSelect').addEventListener('change', checkDenoiseReady);
+document.getElementById('edgeModelSelect').addEventListener('change', checkDenoiseReady);
+
+function checkDenoiseReady() {
+  const mt = document.getElementById('modelType').value;
+  const mv = document.getElementById('modelSelect').value;
+  const ev = document.getElementById('edgeModelSelect').value;
+  document.getElementById('denoiseBtn').disabled = !(CURRENT_FILE && mv && (mt !== 'dncnn_edge' || ev));
+}
+
+document.getElementById('denoiseBtn').addEventListener('click', async function() {
+  if (!CURRENT_FILE) return;
+  const btn = this, spinner = document.getElementById('denoiseSpinner'), rc = document.getElementById('denoiseResultCard');
+  btn.disabled = true; spinner.classList.remove('hidden');
+  const fd = new FormData();
+  fd.append('image', CURRENT_FILE);
+  fd.append('model', document.getElementById('modelSelect').value);
+  fd.append('strength', document.getElementById('strength').value);
+  fd.append('resize', document.getElementById('resize').value);
+  fd.append('tile', document.getElementById('tile').value);
+  fd.append('tta', document.getElementById('ttaCheck').checked ? '1' : '0');
+  fd.append('uncertainty', document.getElementById('uncertaintyCheck').checked ? '1' : '0');
+  const mt = document.getElementById('modelType').value;
+  if (mt === 'dncnn_edge') fd.append('edge_model', document.getElementById('edgeModelSelect').value);
+  if (mt === 'joint') fd.append('joint_model', document.getElementById('modelSelect').value);
+  try {
+    const res = await fetch('/api/denoise', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.error) { alert(t('common.error') + ' ' + data.error); return; }
+    document.getElementById('resultInput').src = 'data:image/jpeg;base64,' + data.input_image;
+    document.getElementById('resultOutput').src = 'data:image/png;base64,' + data.result_image;
+    const uc = document.getElementById('uncertaintyContainer');
+    if (data.uncertainty_image) {
+      uc.classList.remove('hidden');
+      document.getElementById('resultUncertainty').src = 'data:image/png;base64,' + data.uncertainty_image;
+    } else {
+      uc.classList.add('hidden');
+    }
+    document.getElementById('resultMetrics').innerHTML = [
+      '<div class="metric-card"><div class="value">' + data.psnr + '</div><div class="label">' + t('metric.psnr') + '</div></div>',
+      '<div class="metric-card"><div class="value">' + data.duration + 's</div><div class="label">' + t('metric.time') + '</div></div>',
+      '<div class="metric-card"><div class="value">' + data.width + '&times;' + data.height + '</div><div class="label">' + t('metric.size') + '</div></div>',
+      '<div class="metric-card"><div class="value" style="font-size:13px">' + data.model + '</div><div class="label">' + t('metric.model') + '</div></div>',
+    ].join('');
+    rc.classList.remove('hidden');
+    zoomReset(); // reset zoom for new result
+  } catch (e) { alert(t('common.requestFailed') + ' ' + e.message); }
+  finally { btn.disabled = false; spinner.classList.add('hidden'); }
+});
+
+document.getElementById('trainStage').addEventListener('change', function() {
+  const row = document.getElementById('trainModelRow');
+  const eg = document.getElementById('trainEdgeGroup');
+  const lr = document.getElementById('trainLR');
+  const pc = document.getElementById('trainPipelineConfig');
+  const btn = document.getElementById('trainBtn');
+  if (this.value === 'pipeline') {
+    pc.classList.remove('hidden'); row.classList.add('hidden');
+    btn.textContent = t('train.runPipeline');
+    return;
+  }
+  pc.classList.add('hidden');
+  const s = parseInt(this.value);
+  s >= 2 ? row.classList.remove('hidden') : row.classList.add('hidden');
+  if (s === 3) { eg.classList.remove('hidden'); lr.value = '0.00005'; }
+  else { eg.classList.add('hidden'); lr.value = s === 2 ? '0.0001' : '0.001'; }
+  btn.textContent = t('train.runBtn');
+});
+
+document.getElementById('trainBtn').addEventListener('click', async function() {
+  const btn = this, spinner = document.getElementById('trainSpinner'), pc = document.getElementById('trainProgressCard');
+  const isPipeline = document.getElementById('trainStage').value === 'pipeline';
+  btn.disabled = true; spinner.classList.remove('hidden'); pc.classList.remove('hidden');
+  document.getElementById('trainProgressFill').style.width = '0%';
+  document.getElementById('trainStatus').textContent = t('train.progress.starting');
+  document.getElementById('trainLog').textContent = t('train.progress.waiting');
+  document.getElementById('trainChartContainer').classList.add('hidden');
+  let payload, apiUrl;
+  if (isPipeline) {
+    const s1 = document.querySelectorAll('.pipeline-stage')[0];
+    const s2 = document.querySelectorAll('.pipeline-stage')[1];
+    const s3 = document.querySelectorAll('.pipeline-stage')[2];
+    payload = {
+      data: document.getElementById('trainData').value,
+      val: document.getElementById('trainVal').value || null,
+      batch_size: parseInt(document.getElementById('trainBatch').value),
+      stage1: {
+        epochs: parseInt(s1.querySelector('.pipe-ep').value),
+        lr: parseFloat(s1.querySelector('.pipe-lr').value),
+        sigma: parseFloat(s1.querySelector('.pipe-s1-sig').value),
+        eval_sigmas: s1.querySelector('.pipe-s1-eval').value,
+        deep: s1.querySelector('.pipe-s1-deep').checked,
+      },
+      stage2: {
+        epochs: parseInt(s2.querySelector('.pipe-ep').value),
+        lr: parseFloat(s2.querySelector('.pipe-lr').value),
+      },
+      stage3: {
+        epochs: parseInt(s3.querySelector('.pipe-ep').value),
+        lr: parseFloat(s3.querySelector('.pipe-lr').value),
+      },
+    };
+    apiUrl = '/api/train_pipeline';
+  } else {
+    payload = {
+      data: document.getElementById('trainData').value,
+      val: document.getElementById('trainVal').value,
+      stage: parseInt(document.getElementById('trainStage').value),
+      epochs: parseInt(document.getElementById('trainEpochs').value),
+      batch_size: parseInt(document.getElementById('trainBatch').value),
+      lr: parseFloat(document.getElementById('trainLR').value),
+      sigma: parseFloat(document.getElementById('trainSigma').value),
+      eval_sigmas: document.getElementById('trainEvalSigmas').value || '',
+      deep: document.getElementById('trainDeep').checked,
+      dncnn_model: document.getElementById('trainDncnnModel').value || null,
+      edge_model: document.getElementById('trainEdgeModel').value || null,
+    };
+    apiUrl = '/api/train';
+  }
+  try {
+    const res = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const d = await res.json();
+    if (d.error) { alert(t('common.error') + ' ' + d.error); return; }
+    const taskId = d.task_id;
+    const poll = setInterval(async () => {
+      try {
+        const r = await fetch('/api/task/' + taskId);
+        const t2 = await r.json();
+        document.getElementById('trainProgressFill').style.width = t2.progress + '%';
+        // Show stage info for pipeline
+        const statusEl = document.getElementById('trainStatus');
+        if (t2.stage && isPipeline) {
+          const stageLabel = t('train.progress.stage').replace('{n}', t2.stage);
+          statusEl.textContent = '[' + stageLabel + '] ' + t2.message;
+        } else {
+          statusEl.textContent = t2.message;
+        }
+        const log = document.getElementById('trainLog');
+        if (t2.output) log.textContent = t2.output;
+        else if (t2.message !== log.textContent.slice(-200)) { log.textContent += t2.message + '\n'; log.scrollTop = log.scrollHeight; }
+        // Metrics chart
+        if (t2.metrics && t2.metrics.length > 1) {
+          statusEl._metrics = t2.metrics;
+          document.getElementById('trainChartContainer').classList.remove('hidden');
+          renderTrainChart(t2.metrics);
+        }
+        if (t2.status === 'completed' || t2.status === 'error') {
+          clearInterval(poll); btn.disabled = false; spinner.classList.add('hidden');
+          if (t2.status === 'completed') {
+            const msg = isPipeline ? t('train.progress.pipelineDone') : t('train.progress.completed');
+            document.getElementById('trainStatus').innerHTML = '<span class="text-success">&#10003; ' + msg + '</span>';
+            setTimeout(() => loadModels(), 1000);
+          } else {
+            document.getElementById('trainStatus').innerHTML = '<span class="text-error">&#10007; ' + (t2.message || t('train.progress.failed')) + '</span>';
+          }
+        }
+      } catch (e) { /* poll silently */ }
+    }, 60000);
+  } catch (e) { alert(t('common.requestFailed') + ' ' + e.message); btn.disabled = false; spinner.classList.add('hidden'); }
+});
+
+// ── benchmark edge model toggle ──
+document.getElementById('benchEdgeSelect').addEventListener('change', function() {
+  document.getElementById('benchEdgeMethods').style.opacity = this.value ? '1' : '0.4';
+  document.querySelectorAll('#benchEdgeMethods .bench-method').forEach(cb => cb.disabled = !this.value);
+});
+
+// ── benchmark compare button ──
+document.getElementById('benchBtn').addEventListener('click', async function() {
+  const btn = this, spinner = document.getElementById('benchSpinner'), rc = document.getElementById('benchResultCard');
+  btn.disabled = true; spinner.classList.remove('hidden');
+
+  const methods = Array.from(document.querySelectorAll('.bench-method:checked')).map(cb => cb.value);
+  if (!methods.length) { alert(t('bench.error.noMethods')); btn.disabled = false; spinner.classList.add('hidden'); return; }
+
+  const payload = {
+    data: document.getElementById('benchData').value,
+    sigma: parseFloat(document.getElementById('benchSigma').value),
+    max_images: parseInt(document.getElementById('benchMaxImages').value),
+    methods: methods,
+    dncnn_model: document.getElementById('benchDncnnSelect').value || null,
+    edge_model: document.getElementById('benchEdgeSelect').value || null,
+  };
+  try {
+    const res = await fetch('/api/benchmark_compare', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (data.error) { alert(t('common.error') + ' ' + data.error); return; }
+    rc.classList.remove('hidden');
+    document.getElementById('benchSummary').innerHTML = [
+      '<strong>' + t('bench.summary.images') + '</strong> ' + data.count + ' &nbsp;|&nbsp;',
+      '<strong>' + t('bench.summary.sigma') + '</strong> ' + data.sigma + ' &nbsp;|&nbsp;',
+      '<strong>' + t('bench.summary.duration') + '</strong> ' + data.duration + 's',
+    ].join('');
+
+    // Build comparison table: columns = methods, rows = images + average header
+    const methodKeys = (data.methods || []).map(m => m.key);
+    const methodNames = (data.methods || []).map(m => m.name);
+    const firstMethod = (data.methods || [])[0];
+    const imageCount = firstMethod ? firstMethod.results.length : 0;
+
+    // Header row
+    const head = document.getElementById('benchTableHead');
+    head.innerHTML = '<th>' + t('bench.table.num') + '</th><th>' + t('bench.table.image') + '</th>' +
+      methodNames.map(n => '<th>' + n + '</th>').join('');
+
+    // Build rows
+    const body = document.getElementById('benchTableBody'); body.innerHTML = '';
+
+    // Row 0: Average PSNR (highlighted)
+    const avgRow = document.createElement('tr');
+    avgRow.style.background = '#1c2128';
+    avgRow.style.fontWeight = '700';
+    avgRow.innerHTML = '<td></td><td><span class="text-success">&#9632; ' + t('bench.table.avg') + '</span></td>' +
+      (data.methods || []).map(m => '<td style="color:#58a6ff">' + (m.avg_psnr !== null ? m.avg_psnr + ' dB' : '-') + '</td>').join('');
+    body.appendChild(avgRow);
+
+    // Per-image rows
+    for (let i = 0; i < imageCount; i++) {
+      const tr = document.createElement('tr');
+      const imgName = data.methods[0].results[i].image;
+      const cells = ['' + (i + 1), imgName];
+      // best PSNR tracking for highlighting
+      let vals = data.methods.map(m => m.results[i].psnr).filter(v => v !== null);
+      let bestIdx = vals.length ? vals.indexOf(Math.max(...vals)) : -1;
+      tr.innerHTML = '<td>' + (i + 1) + '</td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + imgName + '</td>' +
+        data.methods.map((m, mi) => {
+          const r = m.results[i];
+          if (r.psnr === null) return '<td class="text-error">err</td>';
+          return '<td' + (mi === bestIdx ? ' style="color:#2ea043;font-weight:600"' : '') + '>' + r.psnr.toFixed(2) + '</td>';
+        }).join('');
+      body.appendChild(tr);
+    }
+  } catch (e) { alert(t('common.requestFailed') + ' ' + e.message); }
+  finally { btn.disabled = false; spinner.classList.add('hidden'); }
+});
+
+// ══ synchronized dual-image zoom ══
+const _zoom = { scale: 1, tx: 0, ty: 0, drag: false, sx: 0, sy: 0, stx: 0, sty: 0 };
+
+function zoomApply() {
+  const t = `translate(${_zoom.tx}px,${_zoom.ty}px) scale(${_zoom.scale})`;
+  document.getElementById('zpInput').style.transform = t;
+  document.getElementById('zpOutput').style.transform = t;
+  document.getElementById('zrInput').classList.toggle('hidden', _zoom.scale <= 1);
+  document.getElementById('zrOutput').classList.toggle('hidden', _zoom.scale <= 1);
+}
+
+function zoomReset() { _zoom.scale = 1; _zoom.tx = 0; _zoom.ty = 0; zoomApply(); }
+
+document.querySelectorAll('.zoom-viewport').forEach(vp => {
+  vp.addEventListener('wheel', e => {
+    e.preventDefault();
+    const rect = vp.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const oldS = _zoom.scale;
+    const delta = -e.deltaY * 0.001;
+    _zoom.scale = Math.min(10, Math.max(0.5, _zoom.scale * (1 + delta)));
+    // zoom toward cursor
+    _zoom.tx = mx - (mx - _zoom.tx) * (_zoom.scale / oldS);
+    _zoom.ty = my - (my - _zoom.ty) * (_zoom.scale / oldS);
+    zoomApply();
+  }, { passive: false });
+
+  vp.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    _zoom.drag = true; _zoom.sx = e.clientX; _zoom.sy = e.clientY;
+    _zoom.stx = _zoom.tx; _zoom.sty = _zoom.ty;
+    vp.style.cursor = 'grabbing';
+  });
+});
+
+document.addEventListener('mousemove', e => {
+  if (!_zoom.drag) return;
+  _zoom.tx = _zoom.stx + (e.clientX - _zoom.sx);
+  _zoom.ty = _zoom.sty + (e.clientY - _zoom.sy);
+  zoomApply();
+});
+
+document.addEventListener('mouseup', () => {
+  if (_zoom.drag) {
+    _zoom.drag = false;
+    document.querySelectorAll('.zoom-viewport').forEach(v => v.style.cursor = 'grab');
+  }
+});
+
+document.getElementById('zrInput').addEventListener('click', zoomReset);
+document.getElementById('zrOutput').addEventListener('click', zoomReset);
+
+// ══ history panel ══
+const hpOverlay = document.getElementById('historyOverlay');
+const hpPanel = document.getElementById('historyPanel');
+const hpContent = document.getElementById('historyContent');
+let hpData = { denoise: [], benchmark: [], train: [] };
+let hpTab = 'denoise';
+
+function openHistory() { hpPanel.classList.add('open'); hpOverlay.classList.remove('hidden'); loadHistory(); }
+function closeHistory() { hpPanel.classList.remove('open'); hpOverlay.classList.add('hidden'); }
+
+async function loadHistory() {
+  try {
+    const r = await fetch('/api/history?limit=100');
+    hpData = await r.json();
+    renderHistory(hpTab);
+  } catch (e) { hpContent.innerHTML = '<div class="h-empty">' + t('history.loadError') + '</div>'; }
+}
+
+function renderTrainChart(metrics) {
+  const canvas = document.getElementById('trainChart');
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * 2; canvas.height = 400;
+  ctx.scale(2, 2);
+  const W = canvas.width / 2, H = canvas.height / 2;
+  const pad = {t:20, r:20, b:30, l:50};
+  const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+
+  const epochs = metrics.map(m => m.epoch);
+  const tLoss = metrics.map(m => m.train_loss);
+  const vLoss = metrics.map(m => m.val_loss);
+  if (!tLoss.length) return;
+
+  const allV = [...tLoss, ...vLoss].filter(v => v > 0);
+  const yMin = 0, yMax = allV.length ? Math.max(...allV) * 1.1 : 1;
+  const xMin = epochs[0], xMax = Math.max(epochs[epochs.length - 1], xMin + 1);
+
+  const toX = e => pad.l + (e - xMin) / (xMax - xMin) * pw;
+  const toY = v => pad.t + ph - (v - yMin) / (yMax - yMin) * ph;
+
+  ctx.clearRect(0, 0, W, H);
+  // grid
+  ctx.strokeStyle = '#21262d'; ctx.lineWidth = 1;
+  for (let y = 0; y <= 4; y++) {
+    const yy = pad.t + y / 4 * ph;
+    ctx.beginPath(); ctx.moveTo(pad.l, yy); ctx.lineTo(W - pad.r, yy); ctx.stroke();
+  }
+  // axes
+  ctx.strokeStyle = '#30363d';
+  ctx.beginPath(); ctx.moveTo(pad.l, pad.t); ctx.lineTo(pad.l, pad.t + ph); ctx.lineTo(W - pad.r, pad.t + ph); ctx.stroke();
+
+  // loss lines
+  const draw = (data, color) => {
+    if (data.length < 2) return;
+    ctx.strokeStyle = color; ctx.lineWidth = 2;
+    ctx.beginPath();
+    data.forEach((v, i) => { const x = toX(epochs[i]), y = toY(v); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+    ctx.stroke();
+  };
+  draw(tLoss, '#4e79a7'); draw(vLoss, '#e15759');
+
+  // legend
+  ctx.fillStyle = '#8b949e'; ctx.font = '11px sans-serif';
+  ctx.fillText(t('train.chart.trainLoss'), W - pad.r - 90, pad.t + 14);
+  ctx.fillStyle = '#4e79a7'; ctx.fillRect(W - pad.r - 100, pad.t + 4, 8, 8);
+  ctx.fillStyle = '#8b949e';
+  ctx.fillText(t('train.chart.valLoss'), W - pad.r - 90, pad.t + 30);
+  ctx.fillStyle = '#e15759'; ctx.fillRect(W - pad.r - 100, pad.t + 20, 8, 8);
+
+  // PSNR line (if available)
+  const psnrKey = Object.keys(metrics[0]).find(k => k.startsWith('psnr_'));
+  if (psnrKey) {
+    const pData = metrics.filter(m => m[psnrKey] !== undefined);
+    if (pData.length > 1) {
+      const pVals = pData.map(m => m[psnrKey]);
+      const pMin = Math.min(...pVals) - 1, pMax = Math.max(...pVals) + 1;
+      const pEpochs = pData.map(m => m.epoch);
+      ctx.strokeStyle = '#59a14f'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      pVals.forEach((v, i) => {
+        const x = toX(pEpochs[i]), y = pad.t + ph - (v - pMin) / (pMax - pMin) * ph;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = '#59a14f'; ctx.fillRect(W - pad.r - 100, pad.t + 36, 8, 8);
+      ctx.fillStyle = '#8b949e'; ctx.fillText(psnrKey + ' (dB)', W - pad.r - 90, pad.t + 46);
+    }
+  }
+}
+
+function renderHistory(kind) {
+  hpTab = kind;
+  document.querySelectorAll('.hp-tab').forEach(t => t.classList.toggle('active', t.dataset.htab === kind));
+  const entries = hpData[kind] || [];
+  if (!entries.length) { hpContent.innerHTML = '<div class="h-empty">' + t('history.empty') + '</div>'; return; }
+  const rev = [...entries].reverse();
+  hpContent.innerHTML = rev.map(e => renderEntry(kind, e)).join('');
+}
+
+function renderEntry(kind, e) {
+  if (kind === 'denoise') {
+    const th = e.input_image
+      ? `<div class="h-thumbs"><img src="/api/history/images/${e.input_image}" onclick="window.open(this.src)" title="Input"><img src="/api/history/images/${e.output_image}" onclick="window.open(this.src)" title="Output">${e.has_uncertainty ? '<img src="/api/history/images/' + e.id + '_uncertainty.png" onclick="window.open(this.src)" title="Uncertainty">' : ''}</div>`
+      : '';
+    return `<div class="h-entry"><div class="h-time">${e.timestamp}</div><div class="h-row"><span class="h-label">${t('metric.psnr')}</span><span class="h-value">${e.psnr} dB</span></div><div class="h-row"><span class="h-label">${t('metric.model')}</span><span class="h-value" style="font-size:11px">${e.model}</span></div><div class="h-row"><span class="h-label">${t('metric.size')}</span><span class="h-value">${e.width}&times;${e.height}</span></div>${th}</div>`;
+  }
+  if (kind === 'benchmark') {
+    return `<div class="h-entry"><div class="h-time">${e.timestamp}</div><div class="h-row"><span class="h-label">${t('bench.summary.avgPsnr')}</span><span class="h-value">${e.avg_psnr} dB</span></div><div class="h-row"><span class="h-label">${t('bench.summary.model')}</span><span class="h-value" style="font-size:11px">${e.model}</span></div><div class="h-row"><span class="h-label">${t('bench.summary.sigma')}</span><span class="h-value">${e.sigma}</span></div><div class="h-row"><span class="h-label">${t('bench.summary.images')}</span><span class="h-value">${e.count}</span></div></div>`;
+  }
+  if (kind === 'train') {
+    const sc = e.status === 'completed' ? 'text-success' : 'text-error';
+    return `<div class="h-entry"><div class="h-time">${e.timestamp}</div><div class="h-row"><span class="h-label">Stage</span><span class="h-value">${e.stage}</span></div><div class="h-row"><span class="h-label">Epochs</span><span class="h-value">${e.epochs}</span></div><div class="h-row"><span class="h-label">Status</span><span class="h-value ${sc}">${e.status}</span></div><div style="color:#8b949e;font-size:11px;margin-top:4px">${e.message || ''}</div></div>`;
+  }
+  return '';
+}
+
+document.getElementById('historyBtn').addEventListener('click', openHistory);
+hpOverlay.addEventListener('click', closeHistory);
+document.getElementById('historyClose').addEventListener('click', closeHistory);
+document.addEventListener('click', e => {
+  const tb = e.target.closest('.hp-tab');
+  if (tb) renderHistory(tb.dataset.htab);
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !hpOverlay.classList.contains('hidden')) closeHistory();
+});
+
+// resize handler for chart
+let _chartTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(_chartTimer);
+  _chartTimer = setTimeout(() => {
+    const cc = document.getElementById('trainChartContainer');
+    if (!cc.classList.contains('hidden')) {
+      const se = document.getElementById('trainStatus');
+      if (se._metrics) renderTrainChart(se._metrics);
+    }
+  }, 300);
+});
+
+// init
+(function initLang() {
+  const s = localStorage.getItem('lang');
+  if (s && ALL_T[s]) CURRENT_LANG = s;
+  applyLanguage();
+})();
+loadModels();
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "pipeline_512c84177688",
+    "timestamp": "20260726_094436",
+    "stage": "pipeline",
+    "data": "..\\Div2k\\DIV2K_train_HR",
+    "val": "..\\Div2k\\DIV2K_valid_HR",
+    "batch_size": 8,
+    "stage1_epochs": 1,
+    "stage2_epochs": 1,
+    "stage3_epochs": 1,
+    "dncnn_ckpt": "D:\\Documents\\Github\\Machine_vision\\code_v4\\trained_models\\dncnn_best_20260726_093819.pth",
+    "edge_ckpt": "D:\\Documents\\Github\\Machine_vision\\code_v4\\trained_models\\edge_stage2_best_20260726_094049.pth",
+    "joint_ckpt": "D:\\Documents\\Github\\Machine_vision\\code_v4\\trained_models\\joint_best_20260726_094235.pth",
+    "status": "completed"
+  },
+  {
+    "id": "pipeline_7ae261584040",
+    "timestamp": "20260726_154821",
+    "stage": "pipeline",
+    "data": "..\\Div2k\\DIV2K_train_HR",
+    "val": "..\\Div2k\\DIV2K_valid_HR",
+    "batch_size": 8,
+    "stage1_epochs": 100,
+    "stage2_epochs": 50,
+    "stage3_epochs": 20,
+    "dncnn_ckpt": "D:\\Documents\\Github\\Machine_vision\\code_v4\\trained_models\\dncnn_best_20260726_094758.pth",
+    "edge_ckpt": "D:\\Documents\\Github\\Machine_vision\\code_v4\\trained_models\\edge_stage2_best_20260726_134628.pth",
+    "joint_ckpt": "D:\\Documents\\Github\\Machine_vision\\code_v4\\trained_models\\joint_best_20260726_151117.pth",
+    "status": "completed"
+  }
+]
