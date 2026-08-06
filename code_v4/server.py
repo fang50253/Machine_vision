@@ -8,7 +8,7 @@ Usage:
     python server.py
     # → http://localhost:5000
 """
-import argparse, os, sys, io, base64, json, time, math, glob, csv, threading, uuid
+import argparse, os, sys, io, base64, json, time, math, glob, csv, threading, uuid, logging
 from datetime import datetime
 from pathlib import Path
 from collections import OrderedDict
@@ -62,6 +62,18 @@ print(f"i18n: loaded {len(_translations)} language(s): {', '.join(_available_lan
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+LOG_DIR = os.path.join(PROJECT_ROOT, 'logs')
+os.makedirs(LOG_DIR, exist_ok=True)
+
+def _write_log(task_id: str, line: str) -> None:
+    """Append a single line to the task's log file (rotated per task)."""
+    log_path = os.path.join(LOG_DIR, f'task_{task_id}.log')
+    try:
+        with open(log_path, 'a', encoding='utf-8') as f:
+            f.write(line + '\n')
+    except Exception:
+        pass
 
 # ── task tracking for async operations ──
 _tasks: dict[str, dict] = {}
@@ -891,8 +903,10 @@ def api_train():
             )
             output_lines = []
             _has_metrics = False
+            _write_log(task_id, f"# START {' '.join(cmd)}")
             for line in proc.stdout:
                 line = line.rstrip()
+                _write_log(task_id, line)
 
                 # structured metrics → update status + progress
                 if line.startswith('__METRICS__'):
@@ -1053,8 +1067,10 @@ def api_train_pipeline():
             )
             output_lines = []
             _has_metrics = False
+            _write_log(task_id, f"# STAGE {stage} START {' '.join(cmd)}")
             for line in proc.stdout:
                 line = line.rstrip()
+                _write_log(task_id, line)
                 if line.startswith('__METRICS__'):
                     try:
                         md = json.loads(line[11:])

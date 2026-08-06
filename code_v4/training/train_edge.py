@@ -163,13 +163,22 @@ def set_seed(seed: int = 42):
 
 
 def load_dncnn(ckpt_path: str, device: torch.device) -> DnCNN:
-    model = DnCNN(channels=config.CHANNELS, num_layers=config.NUM_LAYERS,
-                  num_features=config.NUM_FEATURES)
     state = torch.load(ckpt_path, map_location='cpu', weights_only=True)
     if 'model_state' in state:
         state = state['model_state']
     if all(k.startswith('module.') for k in state.keys()):
         state = {k[7:]: v for k, v in state.items()}
+
+    # Detect architecture from checkpoint: "dncnn.0.weight" shape = [F, 3, 3, 3]
+    first_w = next((v for k, v in state.items() if k.endswith('0.weight') and 'dncnn' in k), None)
+    if first_w is not None and first_w.shape[0] > config.NUM_FEATURES:
+        # Load or create deep variant
+        from models.dncnn import create_dncnn_deep
+        model = create_dncnn_deep()
+        print(f"Detected deep DnCNN ({first_w.shape[0]} features) from checkpoint")
+    else:
+        model = DnCNN(channels=config.CHANNELS, num_layers=config.NUM_LAYERS,
+                      num_features=config.NUM_FEATURES)
     model.load_state_dict(state, strict=False)
     model.to(device).eval()
     return model
